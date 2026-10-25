@@ -30,7 +30,6 @@ I cinque giochi di Retro Arcade (repo `2600`) sono cartucce separate: la console
 | Cubo 3×3 WebGL | Tris | touch |
 | Scacco | scacco | touch |
 | TamaPWA | TamaPWA | touch |
-| Triton Wars | triton-wars (build Vite) | touch |
 
 Tastiera (quando la console ha il focus): frecce/WASD = D-pad · Z, K o Spazio = A · X o J = B · Invio = START ·
 Shift = SELECT · Esc = menu. Quando il gioco ha il focus i tasti arrivano direttamente al gioco, come nell'app originale.
@@ -54,7 +53,7 @@ Quando modifichi uno dei giochi nel suo repo, riallinea le cartucce con:
 bash tools/sync-games.sh
 ```
 
-Lo script riscarica i repo, ricompila Triton Wars, reinserisce `gbx-bridge.js`, riapplica i nomi originali (`tools/rebrand.py`) e rigenera `sw.js`.
+Lo script riscarica i repo, reinserisce `gbx-bridge.js`, riapplica i nomi originali (`tools/rebrand.py`) e rigenera `sw.js`.
 Per aggiungere una cartuccia: una riga in `tools/sync-games.sh` e una voce nell'array `GAMES` in `index.html`.
 
 ## Come funziona

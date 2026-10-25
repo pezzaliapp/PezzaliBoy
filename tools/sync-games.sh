@@ -24,7 +24,6 @@ ilcubo    ILCUBO            docs
 tris      Tris              .
 scacco    scacco            .
 tama      TamaPWA           .
-triton    triton-wars       BUILD
 "
 
 echo "$GAMES" | while read -r id repo sub; do

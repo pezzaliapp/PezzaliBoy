@@ -1,5 +1,5 @@
 /* PezzaliBoy service worker (generato da tools/build-sw.py) */
-const CACHE = 'pezzaliboy-6f6ee91c8e';
+const CACHE = 'pezzaliboy-c8f174bf37';
 const FILES = [
 "./gbx-bridge.js",
 "./index.html",
@@ -164,19 +164,6 @@ const FILES = [
 "./games/tama/sprite-sportivo.png",
 "./games/tama/style.css",
 "./games/tris/index.html",
-"./games/triton/favicon.svg",
-"./games/triton/index.html",
-"./games/triton/manifest.webmanifest",
-"./games/triton/sw.js",
-"./games/triton/workbox-8c29f6e4.js",
-"./games/triton/assets/index-CYYqdCEq.js",
-"./games/triton/assets/index-CfOQD2ih.js",
-"./games/triton/assets/index-drg9qwDW.css",
-"./games/triton/assets/qrcode-CaEzny1i.js",
-"./games/triton/assets/workbox-window.prod.es5-vqzQaGvo.js",
-"./games/triton/icons/icon-192.png",
-"./games/triton/icons/icon-512.png",
-"./games/triton/icons/icon-maskable.png",
 "./icons/icon-192.png",
 "./icons/icon-512.png"
 ];
