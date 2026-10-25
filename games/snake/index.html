@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="it">
+<head>
+<script src="../../gbx-bridge.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>Snake — PezzaliAPP</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Snake">
+  <style>
+    :root{
+      --bg:#0f172a;--card:#111827;--ink:#e5e7eb;--muted:#9ca3af;
+      --accent:#22c55e;--danger:#ef4444;--line:#1f2937;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    .wrap{min-height:100%;display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px}
+    header{width:100%;max-width:860px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .brand{font-weight:700;letter-spacing:.5px}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:center}
+    .score{gap:12px}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#0b1220;border:1px solid var(--line);font-size:14px}
+    .btn{cursor:pointer;background:var(--accent);color:#04130a;border:none;border-radius:10px;padding:10px 14px;font-weight:700}
+    .btn.secondary{background:#0b1220;color:var(--ink);border:1px solid var(--line);font-weight:600}
+    .btn.danger{background:var(--danger);color:white}
+    .canvaswrap{position:relative;width:100%;max-width:860px;aspect-ratio:1/1;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#0b1220}
+    canvas{width:100%;height:100%;display:block;image-rendering:pixelated;touch-action:none}
+    .controls{width:100%;max-width:860px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .pad{display:grid;grid-template-areas:". up ."
+                                   "left . right"
+                                   ". down .";
+         gap:8px;place-items:center}
+    .pad button{width:64px;height:64px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:18px;touch-action:none;-webkit-tap-highlight-color:transparent}
+    .pad .up{grid-area:up} .pad .down{grid-area:down}
+    .pad .left{grid-area:left} .pad .right{grid-area:right}
+    .settings{display:flex;flex-direction:column;gap:8px}
+    .row{display:flex;align-items:center;gap:10px}
+    .select, select{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+    footer{opacity:.7;font-size:12px;padding:10px}
+    .hint{font-size:12px;color:var(--muted)}
+    @media (max-width:640px){
+      header{flex-direction:column;align-items:stretch}
+      .controls{grid-template-columns:1fr;gap:14px}
+      .pad button{width:72px;height:72px;touch-action:none;-webkit-tap-highlight-color:transparent}
+      .btn{padding:12px 16px}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="panel score">
+      <span class="badge">Punteggio: <b id="score">0</b></span>
+      <span class="badge">Record: <b id="hiscore">0</b></span>
+      <span class="badge">Velocità: <b id="speedv">1x</b></span>
+    </div>
+    <div class="panel">
+      <button id="btnStart" class="btn">▶︎ Avvia</button>
+      <button id="btnPause" class="btn secondary">⏸ Pausa</button>
+      <button id="btnReset" class="btn danger">↺ Reset</button>
+    </div>
+  </header>
+
+  <div class="canvaswrap" id="canvaswrap">
+    <canvas id="game" width="600" height="600" aria-label="Campo di gioco Snake"></canvas>
+  </div>
+
+  <div class="controls">
+    <div class="panel settings">
+      <div class="row">
+        <label for="mode">Modalità:</label>
+        <select id="mode">
+          <option value="classic">Classica (muri = KO)</option>
+          <option value="wrap">Avvolgente (passi da parte opposta)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="grid">Griglia:</label>
+        <select id="grid">
+          <option value="16">16×16 (comoda)</option>
+          <option value="20" selected>20×20 (classica)</option>
+          <option value="24">24×24 (difficile)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="speed">Velocità iniziale:</label>
+        <select id="speed">
+          <option value="6">Lenta</option>
+          <option value="8" selected>Media</option>
+          <option value="11">Veloce</option>
+        </select>
+      </div>
+      <div class="hint">Tastiera: frecce o WASD • Mobile: swipe o pad • Spazio: pausa</div>
+    </div>
+    <div class="panel pad">
+      <button class="up" aria-label="Su">↑</button>
+      <button class="left" aria-label="Sinistra">←</button>
+      <button class="right" aria-label="Destra">→</button>
+      <button class="down" aria-label="Giù">↓</button>
+    </div>
+    <div class="panel">
+      <button id="btnInstall" class="btn secondary">+ Installa PWA</button>
+    </div>
+  </div>
+
+  <footer>Snake open-source • MIT © 2025 • PezzaliAPP</footer>
+</div>
+
+<script src="script.js"></script>
+<script>
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>{
+      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="../../gbx-bridge.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#020b18">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Aleskat">
+  <meta name="description" content="Aleskat – Deep Sea Worm Survival Game">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>ALESKAT</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- #app centra tutto sullo schermo -->
+<div id="app">
+  <!-- #gameWrapper ha esattamente la dimensione del canvas, dimensionato via JS -->
+  <div id="gameWrapper">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- SPLASH -->
+    <div id="splash">
+      <div class="splash-bg"></div>
+      <div class="splash-content">
+        <div class="logo-wrap">
+          <div class="logo-glow"></div>
+          <h1 class="logo-text">ALESKAT</h1>
+          <p class="logo-sub">DEEP SEA SURVIVAL</p>
+        </div>
+        <div class="menu-btns">
+          <button class="btn-play" id="btnPlay">TUFFARSI</button>
+          <div class="high-score-display">
+            <span class="hs-label">RECORD</span>
+            <span class="hs-val" id="splashHS">0</span>
+          </div>
+        </div>
+        <div class="splash-tips">
+          <span>❤️ 3 vite</span>
+          <span>🦈 Squalo dal Lv.2</span>
+          <span>🐠 Nemo ti aiuta al volo</span>
+          <span>🪱 Attento ai lombrichi grossi</span>
+          <span>⌨️ WASD / frecce su laptop • SPAZIO = boost</span>
+        </div>
+        <div class="splash-footer">Nutriti • Cresci • Sopravvivi</div>
+      </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+      <div class="hud-top">
+        <div class="hud-item">
+          <span class="hud-label">PUNTO</span>
+          <span id="scoreVal">0</span>
+        </div>
+        <div class="hud-item hud-center">
+          <span id="levelVal" class="hud-level">LV 1</span>
+          <span id="livesVal" class="hud-lives">❤️❤️❤️</span>
+        </div>
+        <div class="hud-item hud-right">
+          <span class="hud-label">PROFONDITÀ</span>
+          <span id="depthVal">0m</span>
+        </div>
+      </div>
+      <div class="hud-energy-bar">
+        <div class="energy-fill" id="energyFill"></div>
+        <span class="energy-label">ENERGIA</span>
+      </div>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="gameOver" class="hidden">
+      <div class="go-overlay"></div>
+      <div class="go-content">
+        <div class="go-skull">💀</div>
+        <h2 class="go-title">DIVORATO</h2>
+        <div class="go-stats">
+          <div class="go-stat"><span>Livello</span><strong id="goLevel">1</strong></div>
+          <div class="go-stat"><span>Punteggio</span><strong id="goScore">0</strong></div>
+          <div class="go-stat"><span>Lunghezza</span><strong id="goLength">0</strong></div>
+          <div class="go-stat"><span>Profondità</span><strong id="goDepth">0m</strong></div>
+          <div class="go-stat go-stat-full"><span>Record</span><strong id="goHS">0</strong></div>
+        </div>
+        <button class="btn-play btn-restart" id="btnRestart">RITUFFARSI</button>
+        <button class="btn-menu" id="btnMenu">MENU</button>
+      </div>
+    </div>
+
+    <!-- JOYSTICK -->
+    <div id="joystickZone" class="hidden">
+      <div id="joystickBase">
+        <div id="joystickKnob"></div>
+      </div>
+    </div>
+  </div><!-- /gameWrapper -->
+</div><!-- /app -->
+
+<script src="app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+      try {
+        const reg = await navigator.serviceWorker.register('sw.js');
+        if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              nw.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
+      } catch (err) {
+        console.error('SW registration failed', err);
+      }
+    });
+  }
+</script>
+</body>
+</html>

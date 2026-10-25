@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<script src="../../gbx-bridge.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Defender — PWA (Tributo) v2</title>
+  <meta name="theme-color" content="#0b0f19">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root{--bg:#0b0f19;--panel:#111625;--accent:#49f3ff;--text:#e9eef5;--muted:#91a0ba;--border:#27324a;--ok:#49ffa1;--warn:#ffd24d;--danger:#ff3b58}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    #wrap{display:flex;flex-direction:column;min-height:100vh}
+    header{padding:.6rem 1rem;background:linear-gradient(180deg,#0e1425,#0b0f19);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1a2336;gap:.8rem}
+    header h1{margin:0;font-size:1rem;letter-spacing:.06em;color:var(--accent)}
+    header .meta{font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:.6rem}
+    /* nuovo pulsante README */
+    .btn-link{border:1px solid var(--border);border-radius:8px;padding:.35rem .6rem;color:#dbe4f5;text-decoration:none;display:inline-flex;align-items:center;gap:.35rem}
+    .btn-link:hover{background:#141b2c}
+    #stageWrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.5rem}
+    canvas{background:#05060a;border:1px solid #20293d;border-radius:8px;width:100%;max-width:900px;touch-action:none}
+    #hud{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;align-items:center;margin:.5rem 0}
+    .badge{padding:.25rem .6rem;border:1px solid var(--border);border-radius:6px;color:var(--muted)}
+    .badge strong{color:var(--text)}
+    footer{padding:.6rem 1rem;color:var(--muted);text-align:center}
+    footer a{color:var(--accent);text-decoration:none}
+    /* Touch controls v2 */
+    #touch{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;gap:.8rem;padding:.8rem;background:linear-gradient(180deg,#0b0f19cc,#0b0f19f0);backdrop-filter:blur(6px)}
+    .pad-left{display:grid;grid-template-columns:70px 70px 70px;grid-template-rows:70px 70px;gap:.4rem;align-items:center;justify-items:center}
+    .pad-left .spacer{width:70px;height:70px}
+    .dkey{width:70px;height:70px;border:1px solid var(--border);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#dbe4f5;user-select:none}
+    .dkey:active{background:#1a2236}
+    .pad-right{display:flex;flex-direction:column;gap:.6rem;align-items:flex-end}
+    .btn{border:1px solid var(--border);border-radius:16px;user-select:none;color:#dbe4f5}
+    .btn.fire{width:150px;height:90px;font-size:1.1rem;display:flex;align-items:center;justify-content:center}
+    .btn.missile{width:120px;height:56px;font-size:1rem;display:flex;align-items:center;justify-content:center;opacity:.9}
+    .hint{position:fixed;left:50%;transform:translateX(-50%);bottom:120px;color:var(--muted);font-size:.9rem}
+    @media (min-width:900px){ #touch{display:none} }
+  </style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <h1>DEFENDER — tributo PWA v2</h1>
+    <div class="meta">
+      <a class="btn-link" href="https://www.alessandropezzali.it/DefenderPWA/readme.html" target="_blank" rel="noopener">📄 README</a>
+      <span>© 2025 pezzaliAPP — MIT</span>
+    </div>
+  </header>
+
+  <div id="stageWrap">
+    <canvas id="game" width="900" height="520" aria-label="Defender tribute canvas" role="img"></canvas>
+    <div id="hud">
+      <div class="badge">Punteggio: <strong id="score">0</strong></div>
+      <div class="badge">Vite: <strong id="lives">3</strong></div>
+      <div class="badge">Umanoidi: <strong id="humans">6</strong></div>
+      <div class="badge">Livello: <strong id="level">1</strong></div>
+      <div class="badge">FPS: <strong id="fps">60</strong></div>
+      <div class="badge"><button id="btnPause" class="btn" style="padding:.3rem .6rem">⏯︎ Pausa</button></div>
+      <div class="badge"><button id="btnRestart" class="btn" style="padding:.3rem .6rem">⟲ Restart</button></div>
+      <div class="badge">Tasti desktop: ⬅️➡️ ⬆️⬇️ • SPACE=Fuoco • X=Missile • P=Pausa</div>
+    </div>
+  </div>
+
+  <footer>
+    Tributo non commerciale a <em>Defender</em> (1981, Williams). <a href="readme.html" target="_blank" rel="noopener">Istruzioni / Readme</a>.
+  </footer>
+</div>
+
+<!-- Touch controls -->
+<div id="touch">
+  <div class="pad-left">
+    <div class="spacer"></div>
+    <div class="dkey" data-hold="up">▲</div>
+    <div class="spacer"></div>
+    <div class="dkey" data-hold="left">◀︎</div>
+    <div class="dkey" data-hold="down">▼</div>
+    <div class="dkey" data-hold="right">▶︎</div>
+  </div>
+  <div class="pad-right">
+    <div id="btnFire" class="btn fire" data-tap="fire">FIRE (SPACE)</div>
+    <div id="btnMissile" class="btn missile" data-tap="bomb">MISSILE</div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));}
+</script>
+</body>
+</html>

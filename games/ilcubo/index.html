@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<!--
+© 2025 Alessandro Pezzali. Tutti i diritti riservati.
+Licenza d’Uso — ILCUBO PWA
+-->
+<html lang="it">
+<head>
+<script src="../../gbx-bridge.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0" />
+  <meta name="author" content="Alessandro Pezzali" />
+  <meta name="description" content="ILCUBO — cubo magico 3D personalizzabile con colori, numeri, lettere, testi, emoji e immagini." />
+  <title>ILCUBO</title>
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ILCUBO" />
+  <meta property="og:title" content="ILCUBO" />
+  <meta property="og:description" content="Gioca, personalizza e risolvi il cubo!" />
+  <meta property="og:image" content="icons/meta-image.png" />
+  <meta property="og:url" content="https://www.pezzaliapp.com/ILCUBO/" />
+
+  <!-- PWA / iOS -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ILCUBO" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#ffffff" />
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png" />
+  <link rel="shortcut icon" href="icons/favicon.ico" />
+
+  <!-- CSS principale -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <script>
+    // bump per forzare l'invalidation della cache offline
+    window.gameVersion = '0.1.6'; // ILCUBO — pacchetto pulito + bundle protetto
+  </script>
+
+  <!-- CSS minimo per il pannello Aiuto (isolato, non tocca gli stili esistenti) -->
+  <style>
+    .help-btn {
+      position: fixed; right: 16px; top: 16px;
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 0; background: rgba(0,0,0,.08); color: #111;
+      font: 700 20px/1 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      cursor: pointer; z-index: 20;
+      box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    }
+    .help-btn:focus { outline: 2px solid #4da3ff; outline-offset: 2px; }
+
+    #helpPanel[hidden] { display: none; }
+    #helpPanel {
+      position: fixed; inset: 0; z-index: 30;
+      background: rgba(0,0,0,.45);
+      display: grid; place-items: center;
+    }
+    .help-card {
+      width: min(820px, 92vw); max-height: 86vh; overflow: auto;
+      background: #fff; color: #111; border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      padding: 18px 20px 10px;
+      font: 400 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+    .help-card h2 { margin: 0 0 10px; font-size: 1.35rem; }
+    .help-card h3 { margin: 16px 0 6px; font-size: 1.05rem; }
+    .help-card code {
+      background: #f3f5f8; padding: .15em .35em; border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .help-actions {
+      display: flex; gap: .5rem; justify-content: flex-end; margin-top: 10px;
+    }
+    .help-close {
+      border: 0; background: #111; color: #fff;
+      padding: .55rem .9rem; border-radius: 8px; cursor: pointer;
+      font-weight: 600;
+    }
+    .help-close:focus { outline: 2px solid #4da3ff; outline-offset: 2px; }
+  </style>
+
+  <!-- Manifest PWA -->
+  <link rel="manifest" href="manifest.webmanifest" />
+
+  <!-- Google tag (gtag.js) – KubeApp -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-KLGK05W60D"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-KLGK05W60D');
+  </script>
+
+  <!-- Microsoft Clarity – KubeApp -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "uoy75640m4");
+  </script>
+
+</head><body>
+
+  <noscript>
+    <p style="padding:12px;background:#ffeded;color:#900;font-family:system-ui,Arial">
+      Attiva JavaScript per giocare a ILCUBO.
+    </p>
+  </noscript>
+
+  <!-- Pulsante Aiuto -->
+  <button id="helpToggle" class="help-btn" aria-controls="helpPanel" aria-expanded="false" title="Apri guida">?</button>
+
+  <!-- Pannello Aiuto -->
+  <div id="helpPanel" role="dialog" aria-modal="true" aria-labelledby="helpTitle" hidden>
+    <div class="help-card">
+      <h2 id="helpTitle">Guida per Principianti — Cubo 3×3</h2>
+
+      <h3>Notazione base</h3>
+      <ul>
+        <li><b>R</b> = faccia destra in senso orario • <b>R'</b> = antiorario</li>
+        <li><b>U</b> = faccia superiore orario • <b>U'</b> = antiorario</li>
+        <li><b>L</b> sinistra, <b>D</b> sotto, <b>F</b> frontale, <b>B</b> retro</li>
+      </ul>
+
+      <h3>1) Croce bianca</h3>
+      <p>Forma una croce bianca in alto, allineando i bordi ai centri laterali del loro colore.</p>
+
+      <h3>2) Angoli bianchi</h3>
+      <p>Porta ciascun angolo bianco in alto. Algoritmo tipico: <code>R U R'</code> ripetuto finché l’angolo va al suo posto.</p>
+
+      <h3>3) Secondo strato</h3>
+      <p>
+        Inserisci i bordi centrali:
+        <br><code>U R U' R' U' F' U F</code> (se deve andare a destra)
+        <br><code>U' L' U L U F U' F'</code> (se deve andare a sinistra)
+      </p>
+
+      <h3>4) Croce gialla</h3>
+      <p>Crea la croce gialla sopra con <code>F R U R' U' F'</code> finché compare la croce.</p>
+
+      <h3>5) Posizionare gli angoli gialli</h3>
+      <p>Metti gli angoli al posto (anche se girati): <code>U R U' L' U R' U' L</code>.</p>
+
+      <h3>6) Orientare gli angoli gialli</h3>
+      <p>Ruota gli angoli: <code>R U R' U R U2 R'</code> finché tutti sono gialli in alto.</p>
+
+      <h3>7) Sistemare gli ultimi spigoli</h3>
+      <p>Scambia gli ultimi spigoli con <code>F2 U L R' F2 L' R U F2</code>.</p>
+
+      <p><b>Fatto!</b> Il cubo è risolto 🎉</p>
+
+      <h3 style="font-size:15px">Crediti</h3>
+      <p style="font-size:13px;line-height:1.45;text-transform:none;opacity:.85">
+        ILCUBO © 2016–2026 Alessandro Pezzali.<br>
+        Motore di gioco basato su “The Cube” di Boris Šehovac (MIT), con RoundedBoxGeometry
+        di Dusan Bosnjak (MIT) e Three.js © three.js authors (MIT).
+        Carattere Bungee di David Jonathan Ross © The Bungee Project Authors (SIL Open Font License 1.1).
+        Testi completi delle licenze nel file THIRD-PARTY.txt incluso nell’app.
+      </p>
+
+      <div class="help-actions">
+        <button class="help-close" id="helpClose" title="Chiudi guida">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ui" aria-live="polite">
+    <div class="ui__background"></div>
+    <div class="ui__game" aria-label="Area di gioco 3D"></div>
+
+    <div class="ui__texts">
+  <h1 class="text text--title">
+    <span>IL</span>
+    <span>CUBO</span>
+  </h1>
+  <div class="text text--note">Doppio click e parti!!!</div>
+
+  <!-- 👇 qui aggiungi il footer -->
+  <div class="text text--copyright">
+    © 2026 Alessandro Pezzali. Tutti i diritti riservati. — Licenza d’Uso —
+    ILCUBO — <span class="nowrap">una PWA di pezzaliAPP.com</span>
+  </div>
+
+  <div class="text text--timer">0:00</div>
+  <div class="text text--complete"><span>Completato!</span></div>
+  <div class="text text--best-time">
+    <icon trophy></icon>
+    <span>Miglior tempo!</span>
+  </div>
+</div>
+
+    <div class="ui__prefs">
+      <range name="size" title="Dimensione Cubo" list="2,3,4,5"></range>
+      <range name="flip" title="Tipo di Rotazione" list="Rapido,Morbido,Rimbalzo"></range>
+      <range name="scramble" title="Lunghezza Mischia" list="20,25,30"></range>
+      <range name="fov" title="Angolo Camera" list="Ortografica,Prospettica"></range>
+      <range name="theme" title="Schema Colori" list="Classico,Vivace,Polvere,Camo,Pioggia"></range>
+    </div>
+
+    <div class="ui__theme">
+      <range name="hue" title="Tonalità" color></range>
+      <range name="saturation" title="Saturazione" color></range>
+      <range name="lightness" title="Luminosità" color></range>
+    </div>
+
+    <div class="ui__stats">
+      <div class="stats" name="cube-size"><i>Cubo:</i><b>3x3x3</b></div>
+      <div class="stats" name="total-solves"><i>Soluzioni totali:</i><b>-</b></div>
+      <div class="stats" name="best-time"><i>Miglior tempo:</i><b>-</b></div>
+      <div class="stats" name="worst-time"><i>Peggior tempo:</i><b>-</b></div>
+      <div class="stats" name="average-5"><i>Media di 5:</i><b>-</b></div>
+      <div class="stats" name="average-12"><i>Media di 12:</i><b>-</b></div>
+      <div class="stats" name="average-25"><i>Media di 25:</i><b>-</b></div>
+    </div>
+
+    <div class="ui__buttons">
+      <button class="btn btn--bl btn--stats" aria-label="Statistiche"><icon trophy></icon></button>
+      <button class="btn btn--br btn--prefs" aria-label="Preferenze"><icon settings></icon></button>
+      <button class="btn btn--bl btn--back" aria-label="Indietro"><icon back></icon></button>
+      <button class="btn btn--br btn--theme" aria-label="Modifica tema"><icon theme></icon></button>
+      <button class="btn btn--br btn--reset" aria-label="Reimposta tema"><icon reset></icon></button>
+    </div>
+  </div>
+
+  <!-- Scorrimento dei pannelli su touch.
+       Il motore del cubo blocca ogni "touchmove" a livello di documento (per ruotare il cubo
+       senza far scorrere la pagina): così però non scorrevano nemmeno la guida e i pannelli.
+       Se il dito si muove dentro un elemento che può scorrere, l'evento non arriva al blocco. -->
+  <style>
+    #helpPanel .help-card, [class*="cz-"], [class*="gm-"], [class*="qol-"] { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  </style>
+  <script>
+    (function () {
+      function scrollableAncestor(el) {
+        while (el && el !== document.body && el.nodeType === 1) {
+          var oy = getComputedStyle(el).overflowY;
+          if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 1) return el;
+          el = el.parentElement;
+        }
+        return null;
+      }
+      document.addEventListener('DOMContentLoaded', function () {
+        document.body.addEventListener('touchmove', function (e) {
+          if (scrollableAncestor(e.target)) e.stopPropagation();
+        }, { passive: true });
+      });
+    })();
+  </script>
+
+  <!-- JS: libreria + engine + bundle applicativo protetto -->
+  <script src="three.js"></script>
+  <script src="cube.js"></script>
+  <script src="ilcubo.bundle.min.js"></script>
+
+  <!-- Script minimo per aprire/chiudere l’Aiuto (nessun impatto sul gioco) -->
+  <script>
+    (function () {
+      const panel = document.getElementById('helpPanel');
+      const btn   = document.getElementById('helpToggle');
+      const close = document.getElementById('helpClose');
+
+      function openHelp() {
+        panel.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+      }
+      function closeHelp() {
+        panel.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      }
+
+      btn.addEventListener('click', openHelp);
+      close.addEventListener('click', closeHelp);
+      panel.addEventListener('click', (e) => {
+        if (e.target === panel) closeHelp();
+      });
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !panel.hidden) closeHelp();
+      });
+    })();
+  </script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('./service-worker.js', { scope: './' })
+        .then(reg => console.log('SW registrato:', reg.scope))
+        .catch(err => console.error('SW error:', err));
+    });
+  }
+</script>
+ </body>
+</html>

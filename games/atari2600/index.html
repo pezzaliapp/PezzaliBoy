@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<script src="../../gbx-bridge.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Retro Arcade — Emulazione stile classici</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  :root{
+    --wood:#6b3410; --wood2:#48230a; --panel:#1c1108;
+    --cream:#e8d9b0; --amber:#f5a623; --red:#c1281e; --teal:#2aa198;
+    --crt:#10120c;
+    font-size:16px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%; overflow:hidden;}
+  body{
+    background:#000; color:var(--cream);
+    font-family:"Courier New",ui-monospace,monospace;
+    display:flex; align-items:center; justify-content:center;
+    touch-action:none; user-select:none; -webkit-user-select:none;
+  }
+  /* the console cabinet */
+  #shell{
+    width:100%; height:100%; max-width:520px; margin:0 auto;
+    display:flex; flex-direction:column;
+    background:linear-gradient(180deg,#6b3410 0%,#502608 55%,#341803 100%);
+    position:relative;
+  }
+  /* faux woodgrain */
+  #shell::before{
+    content:""; position:absolute; inset:0; pointer-events:none; opacity:.18;
+    background:repeating-linear-gradient(96deg,rgba(0,0,0,.5) 0 2px,transparent 2px 9px);
+  }
+  header.brand{
+    padding:env(safe-area-inset-top) 14px 0;
+    padding-top:max(env(safe-area-inset-top),10px);
+    text-align:center; position:relative; z-index:2;
+  }
+  .plate{
+    display:inline-block; margin:8px auto 6px;
+    background:#0c0c0c; border:2px solid var(--red); border-radius:10px;
+    padding:7px 18px; box-shadow:0 2px 0 #000,0 0 0 2px #000 inset;
+  }
+  .plate h1{
+    font-family:"Arial Black","Arial",sans-serif; font-weight:900;
+    color:#fff; font-size:clamp(20px,6.5vw,30px); letter-spacing:.5px;
+    text-shadow:2px 2px 0 #000; line-height:1;
+  }
+  /* CRT screen area */
+  #screen-wrap{
+    flex:1; margin:6px 14px; position:relative; z-index:1;
+    background:#000; border-radius:14px;
+    padding:10px;
+    box-shadow:0 0 0 3px #2a1405,0 0 0 6px #160a02,
+               inset 0 0 30px rgba(0,0,0,.9);
+  }
+  #screen-inner{
+    position:relative; width:100%; height:100%;
+    border-radius:8px; overflow:hidden; background:#000;
+    display:flex; align-items:center; justify-content:center;
+  }
+  canvas{
+    display:block; background:var(--crt);
+    image-rendering:pixelated; image-rendering:crisp-edges;
+  }
+  /* scanlines + vignette overlay */
+  .scan{
+    position:absolute; inset:0; pointer-events:none; z-index:5;
+    background:repeating-linear-gradient(180deg,rgba(0,0,0,.0) 0 2px,rgba(0,0,0,.22) 2px 3px);
+    mix-blend-mode:multiply;
+  }
+  .vignette{
+    position:absolute; inset:0; pointer-events:none; z-index:6;
+    box-shadow:inset 0 0 60px 10px rgba(0,0,0,.7);
+    border-radius:8px;
+  }
+  /* ---------- MENU ---------- */
+  #menu{
+    position:absolute; inset:0; z-index:10; overflow-y:auto;
+    background:linear-gradient(180deg,#0b1f2e,#06121c);
+    padding:14px 12px 18px;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  #menu .sub{font-size:11px; letter-spacing:3px; color:var(--amber); text-align:center; opacity:.8;}
+  .game-row{
+    display:flex; align-items:center; gap:12px;
+    background:#0009; border:1px solid #ffffff14; border-radius:10px;
+    padding:10px 12px; cursor:pointer; transition:.12s;
+  }
+  .game-row:active{transform:scale(.97); background:#000d;}
+  .rank{
+    flex:none; width:38px; height:38px; border-radius:8px;
+    background:#0c0c0c; border:2px solid var(--red);
+    display:flex; align-items:center; justify-content:center;
+    font-family:"Arial Black",sans-serif; font-weight:900; font-size:20px; color:#fff;
+    text-shadow:1px 1px 0 #000;
+  }
+  .ginfo{flex:1; min-width:0;}
+  .gname{font-family:"Arial Black",sans-serif; font-weight:900; color:#fff; font-size:17px; text-shadow:1px 1px 0 #000;}
+  .gdesc{font-size:11px; color:#bcdff0; opacity:.85; margin-top:2px;}
+  .grec{font-size:10px; color:var(--amber); letter-spacing:1px; margin-top:3px; font-weight:bold;}
+  .thumb{
+    flex:none; width:54px; height:40px; border-radius:5px;
+    image-rendering:pixelated; border:1px solid #000;
+  }
+  /* ---------- HUD bar over game ---------- */
+  #hud{
+    position:absolute; top:0; left:0; right:0; z-index:20;
+    display:none; align-items:center; justify-content:space-between;
+    padding:6px 8px; font-size:12px; color:var(--amber);
+    background:linear-gradient(180deg,#000c,#0000);
+  }
+  #hud button{
+    font:inherit; color:var(--cream); background:#0008;
+    border:1px solid #fff3; border-radius:6px; padding:3px 9px; cursor:pointer;
+  }
+  #hud .stat{font-family:"Courier New",monospace; letter-spacing:1px;}
+  /* ---------- on screen messages ---------- */
+  #msg{
+    position:absolute; inset:0; z-index:18; display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; background:#000a; padding:20px;
+  }
+  #msg h2{font-family:"Arial Black",sans-serif; color:var(--amber); font-size:26px; text-shadow:2px 2px 0 #000;}
+  #msg p{margin:10px 0 16px; color:var(--cream); font-size:14px; max-width:300px;}
+  #msg button{
+    font:inherit; font-weight:bold; background:var(--red); color:#fff;
+    border:none; border-radius:8px; padding:11px 22px; font-size:15px; cursor:pointer;
+    box-shadow:0 3px 0 #6e1109;
+  }
+  #msg button:active{transform:translateY(2px); box-shadow:0 1px 0 #6e1109;}
+  /* ---------- controls ---------- */
+  #controls{
+    position:relative; z-index:2;
+    padding:10px 18px calc(env(safe-area-inset-bottom) + 14px);
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px; min-height:120px;
+  }
+  .dpad{position:relative; width:128px; height:128px; flex:none;}
+  .dbtn{
+    position:absolute; width:44px; height:44px; background:#1a1a1a;
+    border:2px solid #000; border-radius:9px; color:#888;
+    display:flex; align-items:center; justify-content:center; font-size:18px;
+    box-shadow:0 3px 0 #000; touch-action:none;
+  }
+  .dbtn:active,.dbtn.on{background:#333; box-shadow:0 1px 0 #000; transform:translateY(2px); color:#fff;}
+  .dbtn.up{top:0; left:42px;} .dbtn.down{bottom:0; left:42px;}
+  .dbtn.left{left:0; top:42px;} .dbtn.right{right:0; top:42px;}
+  .dbtn.cnt{top:42px; left:42px; background:#0f0f0f; box-shadow:none; border-color:#222;}
+  .fire-wrap{flex:none; display:flex; flex-direction:column; align-items:center; gap:6px;}
+  .fire{
+    width:84px; height:84px; border-radius:50%;
+    background:radial-gradient(circle at 38% 32%,#ff5b4a,#c1281e 60%,#7a160d);
+    border:3px solid #5a0f08; color:#fff; font-weight:900; font-size:13px; letter-spacing:1px;
+    box-shadow:0 5px 0 #4a0c06,0 7px 10px #0008; touch-action:none;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .fire:active,.fire.on{transform:translateY(4px); box-shadow:0 1px 0 #4a0c06;}
+  .switches{display:flex; flex-direction:column; gap:8px; font-size:9px; color:#e8d9b0aa; text-align:center;}
+  .toggle{
+    width:34px; height:18px; background:#000; border:1px solid #555; border-radius:9px;
+    position:relative; margin:0 auto 2px;
+  }
+  #controls.hidden{display:none;}
+  /* install hint */
+  #install{
+    position:absolute; bottom:8px; left:50%; transform:translateX(-50%);
+    z-index:30; background:#000d; border:1px solid var(--amber);
+    color:var(--amber); font-size:11px; padding:7px 12px; border-radius:8px;
+    display:none; align-items:center; gap:8px; max-width:90%;
+  }
+  #install button{background:var(--amber); color:#000; border:none; border-radius:5px; padding:4px 8px; font-weight:bold; cursor:pointer;}
+  @media (max-width:360px){.dpad{width:112px;height:112px}.fire{width:74px;height:74px}}
+  @media (min-height:760px){#controls{min-height:150px}}
+  /* ---------- disclaimer overlay ---------- */
+  #disclaimer{
+    position:fixed; inset:0; z-index:99; display:none;
+    align-items:center; justify-content:center; background:#000e; padding:16px;
+  }
+  #disclaimer .box{
+    max-width:440px; max-height:88vh; overflow-y:auto;
+    background:#0b1f2e; border:2px solid var(--amber); border-radius:12px;
+    padding:18px 16px; -webkit-overflow-scrolling:touch;
+  }
+  #disclaimer h2{
+    font-family:"Arial Black",sans-serif; color:var(--amber);
+    font-size:17px; text-align:center; margin-bottom:10px; text-shadow:1px 1px 0 #000;
+  }
+  #disclaimer p,#disclaimer li{font-size:12px; line-height:1.5; color:var(--cream); margin-bottom:8px;}
+  #disclaimer ul{padding-left:18px; margin-bottom:8px;}
+  #disclaimer button{
+    display:block; margin:12px auto 0; font:inherit; font-weight:bold;
+    background:var(--red); color:#fff; border:none; border-radius:8px;
+    padding:11px 22px; font-size:14px; cursor:pointer; box-shadow:0 3px 0 #6e1109;
+  }
+  #disclaimer button:active{transform:translateY(2px); box-shadow:0 1px 0 #6e1109;}
+</style>
+</head>
+<body>
+<div id="shell">
+  <header class="brand">
+    <div class="plate"><h1>Retro Arcade</h1></div>
+  </header>
+
+  <div id="screen-wrap">
+    <div id="screen-inner">
+      <canvas id="cv" width="320" height="320"></canvas>
+      <div class="scan"></div>
+      <div class="vignette"></div>
+
+      <div id="hud">
+        <button id="backBtn">&#10094; MENU</button>
+        <span class="stat" id="stat"></span>
+      </div>
+
+      <div id="msg">
+        <h2 id="msgTitle"></h2>
+        <p id="msgText"></p>
+        <button id="msgBtn">GIOCA</button>
+      </div>
+
+      <!-- MENU -->
+      <div id="menu">
+        <div class="sub">EMULATORE STILE RETR&Ograve; &middot; SELEZIONA UN GIOCO</div>
+        <div class="game-row" data-game="pitfall">
+          <div class="rank">1</div>
+          <div class="ginfo"><div class="gname">Jungle Dash</div><div class="gdesc">Salta buche, tronchi e coccodrilli nella giungla</div></div>
+          <canvas class="thumb" data-thumb="pitfall" width="54" height="40"></canvas>
+        </div>
+        <div class="game-row" data-game="riverraid">
+          <div class="rank">2</div>
+          <div class="ginfo"><div class="gname">River Rush</div><div class="gdesc">Vola sul fiume, distruggi nemici, fai rifornimento</div></div>
+          <canvas class="thumb" data-thumb="riverraid" width="54" height="40"></canvas>
+        </div>
+        <div class="game-row" data-game="invaders">
+          <div class="rank">3</div>
+          <div class="ginfo"><div class="gname">Invasione Aliena</div><div class="gdesc">Abbatti le ondate aliene prima che scendano</div></div>
+          <canvas class="thumb" data-thumb="invaders" width="54" height="40"></canvas>
+        </div>
+        <div class="game-row" data-game="pacman">
+          <div class="rank">4</div>
+          <div class="ginfo"><div class="gname">Maze Muncher</div><div class="gdesc">Mangia tutti i puntini, evita i fantasmi</div></div>
+          <canvas class="thumb" data-thumb="pacman" width="54" height="40"></canvas>
+        </div>
+        <div class="game-row" data-game="enduro">
+          <div class="rank">5</div>
+          <div class="ginfo"><div class="gname">Corsa Infinita</div><div class="gdesc">Sorpassa più auto possibile, giorno e notte</div></div>
+          <canvas class="thumb" data-thumb="enduro" width="54" height="40"></canvas>
+        </div>
+        <div class="sub" style="margin-top:6px;opacity:.5;font-size:9px">RICREAZIONI ORIGINALI &middot; OMAGGIO AI CLASSICI</div>
+        <div class="sub" id="showDisclaimer" style="opacity:.6;font-size:9px;cursor:pointer;text-decoration:underline">&#9432; AVVISO LEGALE</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <div class="dpad">
+      <div class="dbtn up"    data-dir="up">&#9650;</div>
+      <div class="dbtn left"  data-dir="left">&#9664;</div>
+      <div class="dbtn cnt"></div>
+      <div class="dbtn right" data-dir="right">&#9654;</div>
+      <div class="dbtn down"  data-dir="down">&#9660;</div>
+    </div>
+    <div class="switches">
+      <div><div class="toggle"></div>SELECT</div>
+      <div><div class="toggle"></div>RESET</div>
+    </div>
+    <div class="fire-wrap">
+      <div class="fire" data-dir="fire">FUOCO</div>
+    </div>
+  </div>
+
+  <div id="install"><span>Installa l'app sul telefono</span><button id="installBtn">Installa</button></div>
+</div>
+
+<!-- ====== AVVISO LEGALE / DISCLAIMER ====== -->
+<div id="disclaimer">
+  <div class="box">
+    <h2>AVVISO LEGALE</h2>
+    <p><strong>Retro Arcade</strong> &egrave; un progetto amatoriale <strong>gratuito e senza scopo di lucro</strong>: una raccolta di mini-giochi in stile "emulazione retr&ograve;", ispirati all'estetica dei videogiochi arcade e da console degli anni '70&ndash;'80.</p>
+    <ul>
+      <li>Questa app <strong>non contiene, non esegue e non distribuisce ROM</strong>, codice, grafica, musica, suoni o altri contenuti originali di terze parti.</li>
+      <li>Tutti i giochi inclusi sono <strong>ricreazioni originali scritte da zero</strong>, realizzate come omaggio (tribute) allo stile dell'epoca. Non sono copie n&eacute; emulazioni dei titoli originali.</li>
+      <li>Eventuali nomi di giochi, console o aziende storiche, ove citati, e i relativi <strong>marchi registrati appartengono ai rispettivi proprietari</strong>. Questa app non &egrave; affiliata, sponsorizzata, autorizzata o approvata da alcun detentore di diritti.</li>
+      <li>L'app &egrave; fornita <strong>"cos&igrave; com'&egrave;"</strong>, senza garanzie di alcun tipo, esplicite o implicite. L'autore declina ogni responsabilit&agrave; per eventuali danni derivanti dall'uso dell'app o da usi impropri della stessa.</li>
+      <li>Se ritieni che un contenuto violi un tuo diritto, contatta l'autore: il contenuto sar&agrave; rimosso o modificato tempestivamente.</li>
+    </ul>
+    <p>Premendo il pulsante dichiari di aver letto e compreso questo avviso.</p>
+    <button id="disclaimerBtn">HO LETTO E ACCETTO</button>
+  </div>
+</div>
+
+<script src="games.js"></script>
+<script>
+  // ----- disclaimer: mostrato al primo avvio, riapribile dal menu -----
+  (function(){
+    const KEY='retroarcade_disclaimer_v1';
+    const dEl=document.getElementById('disclaimer');
+    let seen=false; try{ seen=localStorage.getItem(KEY)==='1'; }catch(e){}
+    if(!seen) dEl.style.display='flex';
+    document.getElementById('disclaimerBtn').addEventListener('click',()=>{
+      dEl.style.display='none';
+      try{ localStorage.setItem(KEY,'1'); }catch(e){}
+    });
+    const show=document.getElementById('showDisclaimer');
+    if(show) show.addEventListener('click',()=>{ dEl.style.display='flex'; });
+  })();
+</script>
+<script>
+  // service worker registration (PWA / offline)
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js').catch(()=>{}));
+  }
+  // install prompt
+  let deferredPrompt=null;
+  window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault(); deferredPrompt=e;
+    document.getElementById('install').style.display='flex';
+  });
+  document.getElementById('installBtn').addEventListener('click',async()=>{
+    if(!deferredPrompt)return;
+    deferredPrompt.prompt(); await deferredPrompt.userChoice;
+    deferredPrompt=null; document.getElementById('install').style.display='none';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<script src="../../gbx-bridge.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#0b1424">
+  <title>Q*bert — PWA (Arcade Complete)</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>🧊 Q*bert — PWA (Tributo 1982)</h1>
+    <div class="actions">
+      <label class="lab">Difficoltà:
+        <select id="difficulty">
+          <option value="arcade" selected>Classico (Arcade)</option>
+          <option value="easy">Facile</option>
+          <option value="hard">Difficile</option>
+        </select>
+      </label>
+      <button id="btnInfo" title="Istruuzioni">ℹ️</button>
+      <button id="btnMute" title="Audio on/off">🔊</button>
+    </div>
+  </header>
+  <main class="wrap">
+    <section class="stage">
+      <canvas id="game" width="288" height="320" tabindex="0" aria-label="Area di gioco Q*bert"></canvas>
+      <div id="hud" class="hud">
+        <span>🧮 <b id="score">0</b></span>
+        <span>❤️ <b id="lives">3</b></span>
+        <span>🏁 <b id="level">1-1</b></span>
+        <span id="status"></span>
+      </div>
+    </section>
+    <section class="controls" aria-label="Comandi touch">
+      <div class="cluster"><button id="upLeft">↖︎</button><button id="upRight">↗︎</button></div>
+      <div class="cluster"><button id="downLeft">↙︎</button><button id="downRight">↘︎</button></div>
+      <div class="cluster"><button id="btnStart" class="primary">Gioca / Pausa</button></div>
+    </section>
+  </main>
+  <footer class="foot"><p>© 2025 pezzaliAPP — MIT. Progetto didattico, non commerciale.</p></footer>
+  <div id="help" class="help hidden">
+    <div class="panel">
+      <h2>Come si gioca</h2>
+      <p>Obiettivo: cambia il colore di <b>tutti i cubi</b> fino al colore finale. Evita le sfere e attira <b>Coily</b> sui dischi ai lati dell’apice.</p>
+      <ul>
+        <li>Diagonali: ↖ ↗ ↙ ↘ (pulsanti touch o tastiera).</li>
+        <li>Tastiera: Q/W/A/S — Numpad 7/9/1/3 — Frecce.</li>
+        <li>Spazio/Invio = Avvio/Pausa · P = Pausa/Resume.</li>
+        <li>Dischi: dall’apice verso ↖/↗ torni in cima e Coily cade.</li>
+      </ul>
+      <button id="helpClose" class="primary">Chiudi</button>
+    </div>
+  </div>
+  <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}</script>
+  <script src="./app.js"></script>
+</body>
+</html>

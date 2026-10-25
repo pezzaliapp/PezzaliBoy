@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<script src="../../gbx-bridge.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#0a1228">
+  <title>Frogger — PWA (Tributo 1981)</title>
+
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Frogger">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <button id="drawerToggle" aria-label="Menu" class="icon-btn" title="Menu">☰</button>
+    <h1>🐸 Frogger — pezzaliAPP</h1>
+    <div class="spacer"></div>
+    <a id="btnReadme" class="pill-btn" href="readme.html" rel="noopener">README</a>
+    <button id="btnInstall" class="pill-btn" hidden>Installa</button>
+  </header>
+
+  <aside id="drawer" class="drawer" aria-hidden="true">
+    <div class="drawer-inner">
+      <h2>Frogger (1981, Konami) — Tributo didattico</h2>
+      <p>Attraversa <strong>strada</strong> e <strong>fiume</strong>, raggiungi le 5 tane. Ottimizzato per iPhone e smartphone.</p>
+      <ul>
+        <li>🎮 <b>Comandi:</b> D-Pad oppure swipe. Start ▶︎</li>
+        <li>⏸️ Pausa con il pulsante • Audio dopo il primo tap</li>
+        <li>📱 Aggiungi alla Home per esperienza full-screen</li>
+        <li>🛜 Funziona offline (PWA + Service Worker)</li>
+      </ul>
+      <button id="closeDrawer" class="pill-btn">Chiudi</button>
+    </div>
+  </aside>
+
+  <main class="container">
+    <canvas id="game" width="336" height="448" aria-label="Frogger game area"></canvas>
+
+    <div class="hud">
+      <button id="btnPlay" class="cta">▶︎ Play</button>
+      <button id="btnPause" class="pill-btn">Pausa</button>
+      <div class="score">
+        <span id="lives">❤️ x3</span>
+        <span id="level">Livello 1</span>
+        <span id="points">Punti 0000</span>
+      </div>
+    </div>
+
+    <div class="timer"><div id="timeBar" class="bar"></div></div>
+
+    <div id="touchZone" class="touch-zone" aria-hidden="false">
+      <div class="dpad">
+        <button class="dir" data-dir="up" aria-label="Su">▲</button>
+        <div class="mid">
+          <button class="dir" data-dir="left" aria-label="Sinistra">◀</button>
+          <button class="dir" data-dir="right" aria-label="Destra">▶</button>
+        </div>
+        <button class="dir" data-dir="down" aria-label="Giù">▼</button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <small>© 2025 pezzaliAPP — MIT • Questo è un tributo didattico, non affiliato a Konami.</small>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    // Basic install prompt
+    let deferredPrompt;
+    const installBtn = document.getElementById('btnInstall');
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.hidden = false;
+    });
+    installBtn?.addEventListener('click', async () => {
+      installBtn.hidden = true;
+      if (deferredPrompt) {        deferredPrompt.prompt();        deferredPrompt = null;      }
+    });
+
+    // Drawer
+    const drawer = document.getElementById('drawer');
+    const drawerToggle = document.getElementById('drawerToggle');
+    const closeDrawer = document.getElementById('closeDrawer');
+    function setDrawer(open){
+      drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+      drawer.classList.toggle('open', !!open);
+    }
+    drawerToggle?.addEventListener('click', ()=>setDrawer(true));
+    closeDrawer?.addEventListener('click', ()=>setDrawer(false));
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js');
+    }
+  </script>
+</body>
+</html>

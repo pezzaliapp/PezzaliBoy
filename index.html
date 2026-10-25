@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>PezzaliBoy Arcade</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Console tascabile che raccoglie i giochi PezzaliAPP: cartucce arcade e puzzle giocabili con D-pad, A, B, START, SELECT, tastiera, gamepad o touch.">
+<meta name="theme-color" content="#cfc9d9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,500;0,700;1,800&family=Silkscreen&display=swap">
+<style>
+/* Layout: un'unica console verticale a tutta altezza — schermo che si allarga, pulsantiera sotto. Un solo look (plastica + LCD), indipendente dal tema. */
+:root{
+  color-scheme: light;
+  --room:#24212d;          /* fondo stanza dietro la console */
+  --room-glow:#3a3550;
+  --plastic:#d3cedd;       /* plastica "lilla grigio" */
+  --plastic-hi:#e6e2ee;
+  --plastic-lo:#a9a3b8;
+  --ink:#3d3a52;           /* serigrafie sulla plastica */
+  --bezel:#4a4860;
+  --bezel-lo:#36344a;
+  --lcd-0:#dfe9b4;         /* 4 toni LCD */
+  --lcd-1:#a6bf73;
+  --lcd-2:#5c7a40;
+  --lcd-3:#22311b;
+  --berry:#9e2556;         /* pulsanti A/B */
+  --berry-lo:#6e1238;
+  --dpad:#2c2a37;
+  --stripe-1:#7a3e8e;
+  --stripe-2:#2f5fa0;
+  --led:#ff3b4f;
+  --f-brand:"Kanit", "Arial Black", system-ui, sans-serif;
+  --f-label:"Kanit", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-lcd:"Silkscreen", "Courier New", ui-monospace, monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  margin:0;background:radial-gradient(120% 80% at 50% 0%, var(--room-glow), var(--room) 70%);
+  color:var(--ink);font-family:var(--f-label);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:max(10px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-bottom, 0px));
+  user-select:none;-webkit-user-select:none;touch-action:manipulation;
+}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--stripe-2);outline-offset:2px}
+
+/* ---------- console ---------- */
+.device{
+  position:relative;width:min(100%, 440px);height:min(100%, 900px);
+  display:flex;flex-direction:column;
+  background:linear-gradient(160deg, var(--plastic-hi), var(--plastic) 40%, var(--plastic-lo));
+  border-radius:14px 14px 64px 14px;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.7), inset 0 -4px 10px rgba(0,0,0,.18), 0 30px 60px rgba(0,0,0,.5);
+  padding:14px 14px 0;
+}
+.device::before{ /* linea di stampo in alto */
+  content:"";position:absolute;left:0;right:0;top:26px;height:2px;background:rgba(0,0,0,.08);
+}
+.topline{display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--plastic-lo);padding:0 6px 10px;font-weight:500}
+.topline b{color:var(--ink);opacity:.55;font-weight:500}
+
+.bezel{
+  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
+  background:linear-gradient(180deg, var(--bezel), var(--bezel-lo));
+  border-radius:10px 10px 38px 10px;padding:10px 10px 12px;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.45);
+}
+.bezel-head{display:flex;align-items:center;gap:8px;padding:0 2px 8px;color:#bdb8cc;font-size:9px;letter-spacing:.16em;text-transform:uppercase}
+.bezel-head .rule{flex:1;height:5px;background:linear-gradient(var(--stripe-1) 0 2px, transparent 2px 3px, var(--stripe-2) 3px 5px);opacity:.9}
+.screen-wrap{flex:1 1 auto;min-height:0;display:flex;gap:10px;align-items:stretch}
+.power{width:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;flex:0 0 auto}
+.power i{width:8px;height:8px;border-radius:50%;background:#5a2430;box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+.power.on i{background:var(--led);box-shadow:0 0 8px var(--led), 0 0 2px #fff inset}
+.power span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:8px;letter-spacing:.2em;color:#9b96ad}
+
+.screen{
+  position:relative;flex:1 1 auto;min-width:0;min-height:0;overflow:hidden;
+  background:var(--lcd-0);border-radius:3px;
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.35), inset 0 6px 16px rgba(0,0,0,.25);
+}
+.screen iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;display:block}
+.toolbar{display:flex;gap:6px;padding-top:8px;align-items:center}
+.chip{
+  white-space:nowrap;flex:0 0 auto;
+  border:0;border-radius:999px;padding:5px 10px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;
+  background:#5d5a75;color:#e8e5f0;cursor:pointer;min-height:26px;
+}
+.chip:active{transform:translateY(1px)}
+.chip[aria-pressed="true"]{background:var(--lcd-1);color:var(--lcd-3)}
+.chip.grow{margin-left:auto}
+.toolbar .now{font-family:var(--f-lcd);font-size:10px;color:#cfd8a8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+
+.brand{display:flex;align-items:baseline;gap:8px;padding:10px 6px 0}
+.brand strong{font-family:var(--f-brand);font-style:italic;font-weight:800;font-size:22px;letter-spacing:-.01em;color:var(--stripe-2)}
+.brand strong em{font-style:italic;color:var(--stripe-1)}
+.brand small{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink);opacity:.6;font-weight:500}
+
+/* ---------- pulsantiera ---------- */
+.deck{position:relative;flex:0 0 auto;height:clamp(200px, 32vh, 250px);display:grid;
+  grid-template-columns:1fr 1fr;grid-template-rows:1fr auto;padding:6px 6px 0}
+.device.compact .deck{height:auto}
+.device.compact .deck .dpad,.device.compact .deck .ab{display:none}
+.device.compact .brand{display:none}
+
+.dpad{position:relative;align-self:center;justify-self:start;width:clamp(118px, 34vw, 140px);aspect-ratio:1;margin-left:4px;touch-action:none}
+.dpad::before{content:"";position:absolute;inset:-8px;border-radius:50%;background:radial-gradient(circle, rgba(0,0,0,.12), transparent 70%)}
+.dpad .arm{position:absolute;background:var(--dpad);box-shadow:inset 0 2px 0 rgba(255,255,255,.12), 0 3px 0 #15141b}
+.dpad .h{left:0;right:0;top:33.3%;height:33.4%;border-radius:6px}
+.dpad .v{top:0;bottom:0;left:33.3%;width:33.4%;border-radius:6px}
+.dpad .hub{position:absolute;left:41%;top:41%;width:18%;height:18%;border-radius:50%;background:radial-gradient(circle at 40% 35%, #3b3948, #22212b)}
+.dpad .tri{position:absolute;width:0;height:0;border:7px solid transparent;opacity:.5}
+.dpad .tri.u{left:50%;top:8%;transform:translateX(-50%);border-bottom-color:#8f8ba3;border-top:0}
+.dpad .tri.d{left:50%;bottom:8%;transform:translateX(-50%);border-top-color:#8f8ba3;border-bottom:0}
+.dpad .tri.l{top:50%;left:8%;transform:translateY(-50%);border-right-color:#8f8ba3;border-left:0}
+.dpad .tri.r{top:50%;right:8%;transform:translateY(-50%);border-left-color:#8f8ba3;border-right:0}
+.dpad .arm.lit-u,.dpad .arm.lit-d,.dpad .arm.lit-l,.dpad .arm.lit-r{filter:brightness(1.25)}
+.dpad.p-u .tri.u,.dpad.p-d .tri.d,.dpad.p-l .tri.l,.dpad.p-r .tri.r{opacity:1;border-bottom-color:var(--lcd-1);border-top-color:var(--lcd-1);border-left-color:var(--lcd-1);border-right-color:var(--lcd-1)}
+.dpad.p-u{transform:perspective(300px) rotateX(6deg)}
+.dpad.p-d{transform:perspective(300px) rotateX(-6deg)}
+.dpad.p-l{transform:perspective(300px) rotateY(-6deg)}
+.dpad.p-r{transform:perspective(300px) rotateY(6deg)}
+
+.ab{align-self:center;justify-self:end;position:relative;width:clamp(124px, 36vw, 150px);height:110px;transform:rotate(-24deg);margin-right:4px}
+.ab::before{content:"";position:absolute;inset:18px -6px;border-radius:40px;background:rgba(0,0,0,.07)}
+.pbtn{position:absolute;width:clamp(52px, 15vw, 60px);aspect-ratio:1;border-radius:50%;border:0;cursor:pointer;touch-action:none;
+  background:radial-gradient(circle at 38% 32%, #c13b70, var(--berry) 55%, var(--berry-lo));
+  box-shadow:0 4px 0 #4c0b26, inset 0 2px 1px rgba(255,255,255,.3)}
+.pbtn span{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%) rotate(24deg);font-weight:700;font-size:13px;letter-spacing:.06em;color:var(--ink)}
+.pbtn.b{left:0;bottom:8px}
+.pbtn.a{right:0;top:8px}
+.pbtn.down{transform:translateY(3px);box-shadow:0 1px 0 #4c0b26, inset 0 2px 4px rgba(0,0,0,.35)}
+
+.ss{grid-column:1 / -1;display:flex;justify-content:center;gap:22px;padding:6px 0 12px;transform:translateX(-10px)}
+.device.compact .ss{transform:none;padding:12px 0 14px}
+.pill{display:flex;flex-direction:column;align-items:center;gap:5px;border:0;background:none;padding:0;cursor:pointer;touch-action:none}
+.pill i{display:block;width:46px;height:13px;border-radius:8px;background:#77738a;transform:rotate(-24deg);box-shadow:0 2px 0 #4a475a, inset 0 1px 0 rgba(255,255,255,.25)}
+.pill b{font-size:10px;letter-spacing:.16em;font-weight:700;color:var(--ink)}
+.pill.down i{transform:rotate(-24deg) translateY(2px);box-shadow:0 0 0 #4a475a}
+.grille{position:absolute;right:22px;bottom:16px;display:flex;gap:7px;transform:rotate(-24deg);pointer-events:none}
+.grille i{width:5px;height:40px;border-radius:3px;background:rgba(0,0,0,.18);box-shadow:inset 0 1px 2px rgba(0,0,0,.3)}
+.device.compact .grille{display:none}
+
+/* ---------- menu LCD ---------- */
+.menu{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--lcd-0);color:var(--lcd-3);font-family:var(--f-lcd)}
+.menu::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg, rgba(34,49,27,.05) 0 1px, transparent 1px 3px)}
+.menu header{padding:10px 12px 6px;display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--lcd-2)}
+.menu header h1{margin:0;font-size:13px;font-weight:400;letter-spacing:.04em}
+.menu header span{font-size:9px;color:var(--lcd-2)}
+.list{flex:1;overflow-y:auto;padding:6px 8px 10px;scrollbar-width:thin;scrollbar-color:var(--lcd-2) transparent;-webkit-overflow-scrolling:touch}
+.list h2{font-size:9px;font-weight:400;margin:10px 4px 4px;color:var(--lcd-2);letter-spacing:.1em}
+.cart{width:100%;display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;text-align:left;
+  border:0;background:transparent;color:var(--lcd-3);padding:5px 6px;border-radius:2px;cursor:pointer;font-family:var(--f-lcd)}
+.cart img,.cart .noimg{width:34px;height:34px;border-radius:4px;object-fit:cover;filter:grayscale(1) contrast(1.15) brightness(1.05) sepia(.6) hue-rotate(40deg) saturate(1.3);
+  box-shadow:0 0 0 2px var(--lcd-2);background:var(--lcd-1)}
+.cart .noimg{display:grid;place-items:center;font-size:12px}
+.cart b{display:block;font-size:12px;font-weight:400;line-height:1.2}
+.cart small{display:block;font-size:9px;color:var(--lcd-2);margin-top:2px;line-height:1.25}
+.cart em{font-style:normal;font-size:8px;padding:2px 4px;border:1px solid var(--lcd-2);color:var(--lcd-2)}
+.cart.sel{background:var(--lcd-3);color:var(--lcd-0)}
+.cart.sel small,.cart.sel em{color:var(--lcd-1);border-color:var(--lcd-1)}
+.cart.sel img,.cart.sel .noimg{box-shadow:0 0 0 2px var(--lcd-1);filter:none}
+.menu footer{padding:6px 10px;border-top:2px solid var(--lcd-2);font-size:8px;color:var(--lcd-2);line-height:1.6}
+
+/* boot + toast */
+.boot{position:absolute;inset:0;display:grid;place-items:center;background:var(--lcd-0);color:var(--lcd-3);font-family:var(--f-lcd);z-index:5;pointer-events:none}
+.boot div{text-align:center;animation:drop 1.1s steps(12) both}
+.boot b{display:block;font-size:20px;font-weight:400}
+.boot small{font-size:9px;color:var(--lcd-2)}
+.boot.gone{opacity:0;transition:opacity .25s}
+@keyframes drop{from{transform:translateY(-120%)}to{transform:none}}
+.toast{position:absolute;left:8px;right:8px;bottom:8px;z-index:6;background:var(--lcd-3);color:var(--lcd-0);font-family:var(--f-lcd);
+  font-size:9px;line-height:1.6;padding:6px 8px;border-radius:2px;pointer-events:none;opacity:0;transform:translateY(6px);transition:.2s}
+.toast.show{opacity:.94;transform:none}
+.loading{position:absolute;inset:0;display:grid;place-items:center;background:var(--lcd-0);color:var(--lcd-3);font-family:var(--f-lcd);font-size:11px;z-index:4}
+
+@media (max-width:360px){ .toolbar .now{display:none} }
+@media (prefers-reduced-motion: reduce){ .boot div{animation:none} .toast{transition:none} }
+@media (min-width:900px){
+  .device{height:min(100%, 860px)}
+}
+@media (max-height:620px){
+  .deck{height:180px}
+  .brand{display:none}
+}
+</style>
+</head>
+<body>
+<main class="device" id="device">
+  <div class="topline"><b>◁ off · on ▷</b><span>pocket arcade</span></div>
+
+  <section class="bezel">
+    <div class="bezel-head"><span class="rule"></span><span>pezzaliapp · arcade matrix</span><span class="rule" style="max-width:24px"></span></div>
+    <div class="screen-wrap">
+      <div class="power on" id="power"><i></i><span>battery</span></div>
+      <div class="screen" id="screen">
+        <div class="menu" id="menu">
+          <header><h1>CARTUCCE</h1><span id="count"></span></header>
+          <nav class="list" id="list" aria-label="Giochi disponibili"></nav>
+          <footer>D-PAD scegli · A o START gioca · tocca una cartuccia<br>Tastiera: frecce · Z=A · X=B · INVIO=START · SHIFT=SELECT</footer>
+        </div>
+        <div class="boot" id="boot"><div><b>PezzaliBoy</b><small>® pezzaliAPP</small></div></div>
+        <div class="toast" id="toast"></div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="chip" id="btnMenu" type="button" title="Torna al menu (Esc)">◂ Menu</button>
+      <button class="chip" id="btnView" type="button" aria-pressed="true" title="Mostra solo l'area di gioco oppure l'app completa">Zoom</button>
+      <span class="now" id="now"></span>
+      <button class="chip grow" id="btnDeck" type="button" title="Pulsantiera completa o compatta">Pad</button>
+      <button class="chip" id="btnSound" type="button" aria-pressed="false" title="Audio">♪ On</button>
+    </div>
+  </section>
+
+  <div class="brand"><strong>Pezzali<em>Boy</em></strong><small>arcade · puzzle · touch</small></div>
+
+  <section class="deck" aria-label="Comandi">
+    <div class="dpad" id="dpad" role="group" aria-label="Croce direzionale">
+      <div class="arm h"></div><div class="arm v"></div><div class="hub"></div>
+      <i class="tri u"></i><i class="tri d"></i><i class="tri l"></i><i class="tri r"></i>
+    </div>
+    <div class="ab">
+      <button class="pbtn b" data-btn="B" type="button" aria-label="B"><span>B</span></button>
+      <button class="pbtn a" data-btn="A" type="button" aria-label="A"><span>A</span></button>
+    </div>
+    <div class="ss">
+      <button class="pill" data-btn="SELECT" type="button" aria-label="Select"><i></i><b>SELECT</b></button>
+      <button class="pill" data-btn="START" type="button" aria-label="Start"><i></i><b>START</b></button>
+    </div>
+    <div class="grille"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </section>
+</main>
+
+<script>
+window.PEZZALIBOY = true;
+
+/* ===== Catalogo cartucce =====
+   key:   {key:' '} tasto tenuto finché il pulsante è premuto
+   click: preme il primo pulsante visibile del gioco, else: ripiego su un tasto
+   focus: cosa mostrare sullo schermo in modalità "Schermo gioco"
+   dpad:  '4' cardinali · '8' con diagonali · 'qbert' solo diagonali */
+const K = k => ({ key: k });
+const GAMES = [
+  { id:'pacman', name:'PAC-MAN', kind:'arcade', note:'Labirinto, pallini e fantasmi',
+    icon:'games/pacman/icon-192.svg', dpad:'4',
+    focus:{ stage:'#wrap', pre:['#hud'], hide:['#du','#dd','#dl','#dr'] },
+    map:{ A:{click:['#ov-btn']}, START:{click:['#ov-btn']} },
+    help:'D-PAD muovi · A/START gioca' },
+  { id:'galaga', name:'GALAGA', kind:'arcade', note:'Sparatutto spaziale 1981',
+    icon:'games/galaga/assets/icon-192.png', dpad:'8',
+    focus:{ stage:'#gameWrap', hide:['#touch'] },
+    map:{ A:K(' '), B:K(' '), START:{click:['#btnStart'], else:K('Enter')}, SELECT:K('p') },
+    help:'◀ ▶ muovi · A spara · START gioca · SELECT pausa' },
+  { id:'invaders', name:'SPACE INVADERS', kind:'arcade', note:'Ondate di alieni 1978',
+    icon:'games/invaders/icons/icon-192.png', dpad:'8',
+    focus:{ stage:'main', pre:['header .hud'], hide:['main .controls','main .toolbar'] },
+    map:{ A:K(' '), B:K(' '), START:{click:['#btnPlay'], else:K(' ')}, SELECT:K('p') },
+    help:'◀ ▶ muovi · A spara · START gioca · SELECT pausa' },
+  { id:'defender', name:'DEFENDER', kind:'arcade', note:'Scrolling orizzontale',
+    icon:'games/defender/icons/icon-192.png', dpad:'8',
+    focus:{ stage:'#stageWrap', hide:['#touch','#hud .badge:nth-child(n+5)'] },
+    map:{ A:K(' '), B:K('x'), START:{click:['#btnRestart']}, SELECT:K('p') },
+    help:'D-PAD vola · A fuoco · B missile · START restart · SELECT pausa' },
+  { id:'frogger', name:'FROGGER', kind:'arcade', note:'Attraversa strada e fiume',
+    icon:'games/frogger/icons/icon-192.png', dpad:'4',
+    focus:{ stage:'main.container', canvas:'#game', hide:['#touchZone','#btnPlay','#btnPause'] },
+    map:{ A:K('ArrowUp'), START:{click:['#btnPlay'], else:K(' ')}, SELECT:{click:['#btnPause']} },
+    help:'D-PAD salta · A avanti · START gioca · SELECT pausa' },
+  { id:'centipede', name:'CENTIPEDE', kind:'arcade', note:'Funghi e millepiedi 1981',
+    icon:'games/centipede/icons/icon-192.png', dpad:'8',
+    focus:{ stage:'#stageWrap', hide:['#touchBar','#stageWrap .notice','#btnPause','#btnRestart'] },
+    map:{ A:K(' '), B:K(' '), START:K('r'), SELECT:K('p') },
+    help:'◀ ▶ muovi · A spara · START ricomincia · SELECT pausa' },
+  { id:'qbert', name:'Q*BERT', kind:'arcade', note:'Salti sulla piramide 1982',
+    icon:'games/qbert/assets/icon-192.png', dpad:'qbert',
+    focus:{ stage:'.stage', canvas:'#game', hide:['.stage .controls','.stage .pad','.stage button','.stage .touch'] },
+    map:{ A:K('Enter'), START:K('Enter'), SELECT:K('p') },
+    help:'Diagonali del D-PAD = 4 salti · START gioca/pausa' },
+  { id:'snake', name:'SNAKE', kind:'arcade', note:'Il serpente classico',
+    icon:'games/snake/icons/icon-192.png', dpad:'4',
+    focus:{ stage:'#canvaswrap', pre:['header .score'] },
+    map:{ A:{click:['#btnStart']}, START:{click:['#btnStart']}, SELECT:{click:['#btnPause']}, B:{click:['#btnReset']} },
+    help:'D-PAD gira · A/START avvia · SELECT pausa · B reset' },
+  { id:'aleskat', name:'ALESKAT', kind:'arcade', note:'Sopravvivenza negli abissi',
+    icon:'games/aleskat/icon-192.png', dpad:'8',
+    map:{ A:K(' '), B:K('Shift'), START:{click:['#btnPlay','#btnRestart']}, SELECT:{click:['#btnMenu']} },
+    help:'D-PAD nuota · A/B scatto · START tuffati · SELECT menu' },
+  { id:'atari2600', name:'2600', kind:'arcade', note:'Collezione di mini-giochi retro',
+    icon:'games/atari2600/icons/icon-192.png', dpad:'8',
+    map:{ A:K(' '), B:K(' '), START:{click:['#disclaimerBtn','#msgBtn']}, SELECT:{click:['#backBtn']} },
+    help:'Tocca un gioco · A fuoco · START conferma · SELECT menu 2600' },
+  { id:'sudoku', name:'SUDOKU', kind:'touch', note:'Logica 9×9, anche su App Store',
+    icon:'games/sudoku/icons/icon-192.png', dpad:'4',
+    map:{ B:K('Backspace') },
+    help:'Tocca cella e numero · D-PAD sposta · B cancella' },
+  { id:'ilcubo', name:'IL CUBO', kind:'touch', note:'Cubo 3D da risolvere',
+    icon:'games/ilcubo/icons/android-chrome-192x192.png', dpad:'4', map:{},
+    help:'Trascina per ruotare le facce' },
+  { id:'tris', name:'CUBO 3×3 WEBGL', kind:'touch', note:'Il cubo con motore WebGL2',
+    icon:'', glyph:'3³', dpad:'4', map:{},
+    help:'Trascina una faccia · fuori dal cubo = orbita' },
+  { id:'scacco', name:'SCACCO', kind:'touch', note:'Scacchi contro il dispositivo',
+    icon:'games/scacco/icons/icon-192.png', dpad:'4', map:{},
+    help:'Tocca il pezzo, poi la casa' },
+  { id:'tama', name:'TAMAPWA', kind:'touch', note:'Il tuo cucciolo virtuale',
+    icon:'games/tama/icon-192.png', dpad:'4', map:{},
+    help:'Tocca l’uovo per farlo nascere' },
+  { id:'triton', name:'TRITON WARS', kind:'touch', note:'Battaglia navale 3D',
+    icon:'games/triton/favicon.svg', dpad:'4', map:{},
+    help:'Tocca le celle per schierare e sparare' }
+];
+
+/* ===== stato ===== */
+const $ = id => document.getElementById(id);
+const screen = $('screen'), menuEl = $('menu'), listEl = $('list'), device = $('device');
+let current = null, frame = null, sel = 0, gbView = true, muted = false, compactUser = null, toastT = 0;
+const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } };
+
+/* ===== menu ===== */
+function buildMenu(){
+  const groups = [['arcade','ARCADE · D-PAD'], ['touch','PUZZLE · TOUCH']];
+  let html = '', idx = 0;
+  const order = [];
+  groups.forEach(([kind, label]) => {
+    html += `<h2>${label}</h2>`;
+    GAMES.filter(g => g.kind === kind).forEach(g => {
+      order.push(g);
+      const img = g.icon ? `<img src="${g.icon}" alt="" loading="lazy">` : `<span class="noimg">${g.glyph || '?'}</span>`;
+      html += `<button class="cart" type="button" data-i="${idx}" id="cart-${g.id}">${img}<span><b>${g.name}</b><small>${g.note}</small></span><em>${kind === 'arcade' ? 'PAD' : 'TOUCH'}</em></button>`;
+      idx++;
+    });
+  });
+  GAMES.length = 0; order.forEach(g => GAMES.push(g));
+  listEl.innerHTML = html;
+  $('count').textContent = GAMES.length + ' GIOCHI';
+  listEl.querySelectorAll('.cart').forEach(b => {
+    b.addEventListener('click', () => { setSel(+b.dataset.i); load(GAMES[sel]); });
+  });
+  const last = GAMES.findIndex(g => g.id === LS('pb-last'));
+  setSel(last >= 0 ? last : 0);
+}
+function setSel(i){
+  sel = (i + GAMES.length) % GAMES.length;
+  listEl.querySelectorAll('.cart').forEach((b, k) => b.classList.toggle('sel', k === sel));
+  const b = listEl.querySelector(`.cart[data-i="${sel}"]`);
+  if (b) b.scrollIntoView({ block:'nearest' });
+}
+
+/* ===== caricamento cartucce ===== */
+function gw(){ try { return frame && frame.contentWindow; } catch (e) { return null; } }
+function bridge(){ const w = gw(); return w && w.gbx; }
+
+function load(g){
+  unload();
+  current = g; LS('pb-last', g.id);
+  menuEl.hidden = true;
+  const ld = document.createElement('div');
+  ld.className = 'loading'; ld.id = 'loading'; ld.textContent = 'CARICO ' + g.name + '…';
+  screen.appendChild(ld);
+  frame = document.createElement('iframe');
+  frame.title = g.name;
+  frame.setAttribute('allow', 'autoplay; fullscreen; gamepad; accelerometer; gyroscope');
+  frame.src = 'games/' + g.id + '/index.html';
+  frame.addEventListener('load', onFrameLoad);
+  screen.insertBefore(frame, $('toast'));
+  $('now').textContent = '▶ ' + g.name;
+  applyDeck();
+  syncViewChip();
+}
+function onFrameLoad(){
+  const g = current; if (!g) return;
+  const w = gw();
+  const ld = $('loading'); if (ld) ld.remove();
+  try {
+    w.addEventListener('keydown', e => mirrorKey(e, true), true);
+    w.addEventListener('keyup', e => mirrorKey(e, false), true);
+    w.addEventListener('pointerdown', unlockAudio, true);
+    w.addEventListener('touchend', unlockAudio, true);
+  } catch (e) {}
+  applyView(true);
+  if (muted) setTimeout(() => { const b = bridge(); b && b.mute(true); }, 400);
+  toast(g.help);
+  try { w.focus(); } catch (e) {}
+}
+function unload(){
+  releaseAll();
+  if (frame) { frame.remove(); frame = null; }
+  const ld = $('loading'); if (ld) ld.remove();
+  current = null;
+}
+function backToMenu(){
+  unload();
+  menuEl.hidden = false;
+  $('now').textContent = '';
+  applyDeck(); syncViewChip();
+  setSel(sel);
+  window.focus();
+}
+
+/* Schermo gioco / app completa */
+function applyView(retry){
+  const g = current, b = bridge();
+  if (!g || !g.focus || !b) return;
+  if (gbView) {
+    const ok = b.focus(g.focus);
+    if (!ok && retry) setTimeout(() => applyView(false), 600);
+  } else b.unfocus();
+}
+function syncViewChip(){
+  const v = $('btnView');
+  const has = current && current.focus;
+  v.hidden = !has;
+  v.setAttribute('aria-pressed', String(gbView));
+  v.textContent = gbView ? 'Zoom' : 'App';
+}
+$('btnView').addEventListener('click', () => {
+  gbView = !gbView; LS('pb-view', gbView ? '1' : '0');
+  applyView(false); syncViewChip(); refocus();
+});
+
+/* Pulsantiera completa / compatta */
+function applyDeck(){
+  const auto = current && current.kind === 'touch';
+  const compact = compactUser === null ? auto : compactUser;
+  device.classList.toggle('compact', !!compact);
+  $('btnDeck').textContent = compact ? 'Pad ▴' : 'Pad ▾';
+  $('btnDeck').setAttribute('aria-pressed', String(!compact));
+}
+$('btnDeck').addEventListener('click', () => {
+  const now = device.classList.contains('compact');
+  compactUser = !now; applyDeck(); refocus();
+});
+$('btnMenu').addEventListener('click', backToMenu);
+$('btnSound').addEventListener('click', () => {
+  muted = !muted;
+  $('btnSound').textContent = muted ? '♪ Off' : '♪ On';
+  $('btnSound').setAttribute('aria-pressed', String(muted));
+  const b = bridge(); if (b) b.mute(muted);
+  refocus();
+});
+function refocus(){ const w = gw(); if (w) try { w.focus(); } catch (e) {} }
+
+function toast(msg){
+  const t = $('toast'); if (!msg) return;
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3800);
+}
+function unlockAudio(){
+  const b = bridge(); if (!b) return;
+  if (muted) return;
+  b.unlock();
+}
+
+/* ===== azioni dei pulsanti ===== */
+const DIR_KEY = { u:'ArrowUp', d:'ArrowDown', l:'ArrowLeft', r:'ArrowRight' };
+const held = new Map(); // nome pulsante -> funzione di rilascio
+
+function doAction(act, down){
+  const b = bridge(); if (!b || !act) return null;
+  if (act.click) {
+    if (!down) return null;
+    if (!b.click(act.click) && act.else) return doAction(act.else, true);
+    return null;
+  }
+  if (act.key) {
+    b.key(down ? 'keydown' : 'keyup', { key: act.key });
+    if (down && act.key.length === 1) b.key('keypress', { key: act.key });
+    return () => b.key('keyup', { key: act.key });
+  }
+  return null;
+}
+
+function buttonDown(name){
+  if (held.has(name)) return;
+  flash(name, true);
+  unlockAudio();
+  if (!current) { menuInput(name); held.set(name, null); return; }
+  const act = (current.map || {})[name];
+  const rel = doAction(act, true);
+  held.set(name, rel);
+  if (muted) { const b = bridge(); b && setTimeout(() => b.mute(true), 30); }
+}
+function buttonUp(name){
+  if (!held.has(name)) return;
+  flash(name, false);
+  const rel = held.get(name); held.delete(name);
+  if (rel) rel();
+}
+function releaseAll(){ [...held.keys()].forEach(buttonUp); setDirs(new Set()); }
+
+function menuInput(name){
+  if (name === 'u') setSel(sel - 1);
+  else if (name === 'd') setSel(sel + 1);
+  else if (name === 'l') setSel(sel - 5);
+  else if (name === 'r') setSel(sel + 5);
+  else if (name === 'A' || name === 'START') load(GAMES[sel]);
+}
+
+function flash(name, on){
+  const el = document.querySelector(`[data-btn="${name}"]`);
+  if (el) el.classList.toggle('down', on);
+}
+
+/* ===== D-pad (tocco con trascinamento e diagonali) ===== */
+const dpad = $('dpad');
+let dirs = new Set();
+function dirsFromPoint(x, y){
+  const r = dpad.getBoundingClientRect();
+  const dx = x - (r.left + r.width / 2), dy = y - (r.top + r.height / 2);
+  const s = new Set();
+  if (Math.hypot(dx, dy) < r.width * 0.09) return s;
+  const mode = current ? current.dpad : '4';
+  const ang = Math.atan2(dy, dx) * 180 / Math.PI; // 0 = destra, 90 = giù
+  if (mode === 'qbert') {
+    // quadranti diagonali: ↖ Left · ↗ Up · ↘ Right · ↙ Down
+    if (ang < -90) s.add('l'); else if (ang < 0) s.add('u'); else if (ang < 90) s.add('r'); else s.add('d');
+    return s;
+  }
+  const sector = Math.round(ang / 45); // -4..4
+  const map8 = { 0:['r'], 1:['r','d'], 2:['d'], 3:['d','l'], 4:['l'], '-4':['l'], '-3':['l','u'], '-2':['u'], '-1':['u','r'] };
+  if (mode === '8') map8[sector].forEach(d => s.add(d));
+  else { const card = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : (dy > 0 ? 'd' : 'u'); s.add(card); }
+  return s;
+}
+function setDirs(next){
+  dirs.forEach(d => { if (!next.has(d)) dirUp(d); });
+  next.forEach(d => { if (!dirs.has(d)) dirDown(d); });
+  dirs = next;
+  dpad.className = 'dpad' + [...next].map(d => ' p-' + d).join('');
+}
+function dirDown(d){
+  unlockAudio();
+  if (!current) { menuInput(d); return; }
+  const b = bridge(); if (!b) return;
+  b.key('keydown', { key: DIR_KEY[d] });
+}
+function dirUp(d){
+  if (!current) return;
+  const b = bridge(); if (!b) return;
+  b.key('keyup', { key: DIR_KEY[d] });
+}
+let dpadPointer = null;
+dpad.addEventListener('pointerdown', e => {
+  e.preventDefault(); dpadPointer = e.pointerId;
+  try { dpad.setPointerCapture(e.pointerId); } catch (_) {}
+  setDirs(dirsFromPoint(e.clientX, e.clientY));
+});
+dpad.addEventListener('pointermove', e => { if (e.pointerId === dpadPointer) setDirs(dirsFromPoint(e.clientX, e.clientY)); });
+['pointerup','pointercancel','lostpointercapture'].forEach(t => dpad.addEventListener(t, e => {
+  if (e.pointerId === dpadPointer) { dpadPointer = null; setDirs(new Set()); }
+}));
+dpad.addEventListener('touchend', unlockAudio);
+
+/* A B START SELECT */
+document.querySelectorAll('[data-btn]').forEach(el => {
+  const name = el.dataset.btn;
+  el.addEventListener('pointerdown', e => { e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch (_) {} buttonDown(name); });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t => el.addEventListener(t, () => buttonUp(name)));
+  el.addEventListener('touchend', unlockAudio);
+  el.addEventListener('contextmenu', e => e.preventDefault());
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); buttonDown(name); setTimeout(() => buttonUp(name), 120); } });
+});
+
+/* ===== tastiera della console (quando il gioco non ha il focus) ===== */
+const KEY_BTN = { ArrowUp:'u', ArrowDown:'d', ArrowLeft:'l', ArrowRight:'r', w:'u', s:'d', a:'l', d:'r',
+                  z:'A', k:'A', ' ':'A', x:'B', j:'B', Enter:'START', Shift:'SELECT', Backspace:'SELECT' };
+function keyName(e){ return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+window.addEventListener('keydown', e => {
+  if (e.target && e.target.closest && e.target.closest('.toolbar')) return;
+  if (e.key === 'Escape') { if (current) backToMenu(); return; }
+  const n = KEY_BTN[keyName(e)];
+  if (!n || e.repeat) return;
+  e.preventDefault();
+  if ('udlr'.includes(n) && n.length === 1) { const s = new Set(dirs); s.add(n); setDirs(s); }
+  else buttonDown(n);
+});
+window.addEventListener('keyup', e => {
+  const n = KEY_BTN[keyName(e)]; if (!n) return;
+  if ('udlr'.includes(n) && n.length === 1) { const s = new Set(dirs); s.delete(n); setDirs(s); }
+  else buttonUp(n);
+});
+/* quando il gioco ha il focus, i tasti vanno diretti al gioco: illuminiamo solo i pulsanti */
+const MIRROR = { ArrowUp:'u', ArrowDown:'d', ArrowLeft:'l', ArrowRight:'r' };
+function mirrorKey(e, down){
+  if (e.key === 'Escape' && down && current && current.kind === 'arcade') { setTimeout(backToMenu, 0); return; }
+  const d = MIRROR[e.key];
+  if (d) dpad.classList.toggle('p-' + d, down);
+}
+
+/* ===== gamepad fisico ===== */
+let padPrev = {};
+function pollPad(){
+  let pads = [];
+  try { pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : []; } catch (e) {}
+  if (pads.length) {
+    const p = pads[0], st = {};
+    const bt = i => p.buttons[i] && p.buttons[i].pressed;
+    st.A = bt(0); st.B = bt(1) || bt(2); st.SELECT = bt(8); st.START = bt(9);
+    const ax = p.axes[0] || 0, ay = p.axes[1] || 0;
+    const nd = new Set();
+    if (bt(12) || ay < -.5) nd.add('u'); if (bt(13) || ay > .5) nd.add('d');
+    if (bt(14) || ax < -.5) nd.add('l'); if (bt(15) || ax > .5) nd.add('r');
+    ['A','B','SELECT','START'].forEach(n => { if (st[n] && !padPrev[n]) buttonDown(n); if (!st[n] && padPrev[n]) buttonUp(n); });
+    const dk = [...nd].sort().join(''), pk = [...dirs].sort().join('');
+    if (dpadPointer === null && dk !== padPrev.dk) {
+      let s = nd;
+      if (current && current.dpad === 'qbert' && nd.size === 2) {
+        s = new Set([nd.has('u') ? (nd.has('l') ? 'l' : 'u') : (nd.has('l') ? 'd' : 'r')]);
+      }
+      setDirs(s);
+    }
+    st.dk = dk; padPrev = st;
+  }
+  requestAnimationFrame(pollPad);
+}
+requestAnimationFrame(pollPad);
+
+/* ===== avvio ===== */
+gbView = LS('pb-view') !== '0';
+buildMenu(); applyDeck(); syncViewChip();
+setTimeout(() => { const b = $('boot'); b.classList.add('gone'); setTimeout(() => b.remove(), 300); }, 1300);
+window.addEventListener('blur', () => { /* il focus è passato al gioco: rilasciamo solo i tasti della console */ });
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+</script>
+</body>
+</html>

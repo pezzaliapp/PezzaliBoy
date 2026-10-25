@@ -1,0 +1,25 @@
+{
+  "id": "/TamaPWA/",
+  "name": "TamaPWA — animaletto virtuale",
+  "short_name": "TamaPWA",
+  "description": "Cresci il tuo animaletto virtuale: cinque evoluzioni, minigiochi, missioni giornaliere. Funziona offline.",
+  "lang": "it",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "portrait",
+  "background_color": "#2a2622",
+  "theme_color": "#2a2622",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Gioca", "short_name": "Gioca", "url": "./index.html?a=play", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Missioni", "short_name": "Missioni", "url": "./index.html?a=quests", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="it">
+<head>
+<script src="../../gbx-bridge.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TamaPWA</title>
+<meta name="description" content="Un animaletto virtuale che cresce davvero: cinque evoluzioni, minigiochi, streak giornaliera. Funziona offline.">
+<meta name="theme-color" content="#2a2622">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TamaPWA">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+
+<div class="device">
+  <div class="brand">
+    <span class="brand-mark">TamaPWA</span>
+    <span class="brand-gen" id="genTag">gen 1</span>
+  </div>
+
+  <div class="bezel">
+    <div class="screen" id="screen">
+      <div class="hud">
+        <span id="hudName">Tama</span>
+        <span class="hud-right">
+          <span id="hudStreak" title="giorni di fila">0</span>
+          <span class="sep">·</span>
+          <span id="hudCoins" title="monete">0</span>
+        </span>
+      </div>
+
+      <div class="stage" id="stage">
+        <div class="egg" id="egg" aria-hidden="true"><i></i><i></i><i></i></div>
+        <img id="sprite" class="sprite" alt="" hidden>
+        <div class="fallback" id="fallback" hidden>◕‿◕</div>
+        <div class="zzz" id="zzz" hidden>z z z</div>
+        <div class="fx" id="fx" aria-hidden="true"></div>
+      </div>
+
+      <p class="say" id="say">…</p>
+
+      <div class="matrix" aria-hidden="true"></div>
+      <div class="glare" aria-hidden="true"></div>
+    </div>
+
+    <div class="lamps">
+      <span class="lamp lamp-care" id="lampCare" title="ha bisogno di te"></span>
+      <span class="lamp lamp-quest" id="lampQuest" title="missioni da completare"></span>
+    </div>
+  </div>
+
+  <div class="readout" id="readout">
+    <div class="row"><span class="lbl">Fame</span><span class="segs" id="sH"></span></div>
+    <div class="row"><span class="lbl">Umore</span><span class="segs" id="sHa"></span></div>
+    <div class="row"><span class="lbl">Energia</span><span class="segs" id="sE"></span></div>
+    <div class="row"><span class="lbl">Pulizia</span><span class="segs" id="sC"></span></div>
+    <div class="row"><span class="lbl">Salute</span><span class="segs" id="sHe"></span></div>
+    <div class="row bond"><span class="lbl">Legame</span><span class="segs" id="sB"></span></div>
+  </div>
+
+  <nav class="pad">
+    <button class="key" id="bFeed"><b>🍎</b><span>Nutri</span></button>
+    <button class="key" id="bClean"><b>🧼</b><span>Pulisci</span></button>
+    <button class="key" id="bPlay"><b>🎮</b><span>Gioca</span></button>
+    <button class="key" id="bSleep"><b>😴</b><span>Dormi</span></button>
+    <button class="key" id="bCare"><b>💊</b><span>Cura</span></button>
+    <button class="key" id="bShop"><b>🛒</b><span>Negozio</span></button>
+    <button class="key" id="bQuests"><b>🎯</b><span>Missioni</span></button>
+    <button class="key" id="bMenu"><b>⚙️</b><span>Menu</span></button>
+  </nav>
+
+  <p class="ticker" id="ticker" role="status" aria-live="polite"></p>
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+
+<!-- ============ GIOCA ============ -->
+<dialog id="dPlay" class="sheet">
+  <h2>Gioca</h2>
+  <p class="hint">Ogni partita costa <b>10 energia</b> e frutta monete.</p>
+  <div class="menu">
+    <button class="opt" data-game="catch"><b>🎯 Acchiappa</b><span>Record: <i id="recCatch">0</i> punti</span></button>
+    <button class="opt" data-game="reflex"><b>⚡ Riflessi</b><span>Record: <i id="recReflex">—</i> ms</span></button>
+    <button class="opt" data-game="seq"><b>🔷 Sequenza</b><span>Record: <i id="recSeq">0</i> round</span></button>
+  </div>
+  <form method="dialog" class="foot"><button class="ghost">Chiudi</button></form>
+</dialog>
+
+<!-- ============ CATCH ============ -->
+<dialog id="dCatch" class="sheet">
+  <h2>🎯 Acchiappa</h2>
+  <p class="hint">Tocca il bersaglio più volte che puoi in 15 secondi. Accelera a ogni presa.</p>
+  <div id="catchArea"><button id="target" type="button" aria-label="bersaglio">+</button></div>
+  <div class="bar-info">
+    <span>Punti <b id="cPts">0</b></span>
+    <span>Tempo <b id="cTime">15</b>s</span>
+    <button id="startCatch" class="cta">Via</button>
+  </div>
+  <form method="dialog" class="foot"><button class="ghost">Chiudi</button></form>
+</dialog>
+
+<!-- ============ REFLEX ============ -->
+<dialog id="dReflex" class="sheet">
+  <h2>⚡ Riflessi</h2>
+  <p class="hint">Aspetta il verde, poi tocca. Cinque round. Anticipare costa un round.</p>
+  <button id="reflexArea" class="idle" type="button">Premi Via</button>
+  <div class="bar-info">
+    <span>Round <b id="rRound">0</b>/5</span>
+    <span>Ultimo <b id="rTime">—</b> ms</span>
+    <button id="startReflex" class="cta">Via</button>
+  </div>
+  <form method="dialog" class="foot"><button class="ghost">Chiudi</button></form>
+</dialog>
+
+<!-- ============ SEQUENCE ============ -->
+<dialog id="dSeq" class="sheet">
+  <h2>🔷 Sequenza</h2>
+  <p class="hint" id="seqHelp">Guarda la sequenza, poi ripetila. Puoi usare anche i tasti 1‑4.</p>
+  <div id="seqBoard" role="group" aria-label="pulsanti sequenza">
+    <button class="q q1" data-q="1" aria-label="uno, triangolo"><span>▲</span></button>
+    <button class="q q2" data-q="2" aria-label="due, cerchio"><span>●</span></button>
+    <button class="q q3" data-q="3" aria-label="tre, quadrato"><span>■</span></button>
+    <button class="q q4" data-q="4" aria-label="quattro, rombo"><span>◆</span></button>
+  </div>
+  <div class="bar-info">
+    <span>Round <b id="seqRound">0</b></span>
+    <span id="seqStatus">—</span>
+    <button id="startSeq" class="cta">Via</button>
+  </div>
+  <form method="dialog" class="foot"><button class="ghost">Chiudi</button></form>
+</dialog>
+
+<!-- ============ NEGOZIO ============ -->
+<dialog id="dShop" class="sheet">
+  <h2>Negozio</h2>
+  <p class="hint">Hai <b id="shopCoins">0</b> monete. Si guadagnano giocando e tornando ogni giorno.</p>
+  <div class="menu" id="shopList"></div>
+  <form method="dialog" class="foot"><button class="ghost">Chiudi</button></form>
+</dialog>
+
+<!-- ============ MISSIONI ============ -->
+<dialog id="dQuests" class="sheet">
+  <h2>Missioni di oggi</h2>
+  <p class="hint">Si rinnovano a mezzanotte. Completarle tutte e tre dà un bonus.</p>
+  <div class="quests" id="questList"></div>
+  <h3 class="sub">Album delle evoluzioni</h3>
+  <p class="hint" id="albHint"></p>
+  <div class="album" id="album"></div>
+  <form method="dialog" class="foot"><button class="ghost">Chiudi</button></form>
+</dialog>
+
+<!-- ============ MENU ============ -->
+<dialog id="dMenu" class="sheet">
+  <h2>Menu</h2>
+  <label class="field"><span>Nome</span><input id="inName" maxlength="12" autocomplete="off"></label>
+  <div class="menu">
+    <button class="opt" id="bHelp"><b>Come si gioca</b><span>le regole in sei righe</span></button>
+    <button class="opt toggle" id="tSound"><b>Suoni</b><span id="vSound">acceso</span></button>
+    <button class="opt toggle" id="tHaptic"><b>Vibrazione</b><span id="vHaptic">accesa</span></button>
+    <button class="opt toggle" id="tNotify"><b>Promemoria</b><span id="vNotify">spento</span></button>
+    <button class="opt" id="bInstall" hidden><b>Installa l'app</b><span>aggiungila alla schermata home</span></button>
+    <button class="opt" id="bUpdate"><b>Cerca aggiornamenti</b><span>ricarica la versione più recente</span></button>
+    <button class="opt danger" id="bReset"><b>Ricomincia da zero</b><span>cancella salvataggio e cache</span></button>
+  </div>
+  <p class="hint" id="menuInfo"></p>
+  <form method="dialog" class="foot"><button class="ghost">Chiudi</button></form>
+</dialog>
+
+<!-- ============ BENTORNATO ============ -->
+<dialog id="dBack" class="sheet">
+  <h2 id="backTitle">Bentornato</h2>
+  <p class="hint" id="backBody"></p>
+  <ul class="recap" id="backRecap"></ul>
+  <form method="dialog" class="foot"><button class="cta wide">Continua</button></form>
+</dialog>
+
+<!-- ============ FINE CICLO ============ -->
+<dialog id="dEnd" class="sheet">
+  <h2 id="endTitle">Fine di un ciclo</h2>
+  <p class="hint" id="endBody"></p>
+  <ul class="recap" id="endRecap"></ul>
+  <button class="cta wide" id="bNewGen">Inizia una nuova generazione</button>
+</dialog>
+
+<!-- ============ COME SI GIOCA ============ -->
+<dialog id="dHelp" class="sheet">
+  <h2>Come si gioca</h2>
+  <ol class="rules">
+    <li><b>Scalda l'uovo.</b> Toccalo sullo schermo. Si schiude da solo in cinque minuti, ma ogni carezza accorcia l'attesa.</li>
+    <li><b>Tieni le cinque barre in alto.</b> Fame, umore, energia e pulizia calano da sole col passare delle ore. Se ne trascuri due insieme, si ammala, e la salute scende.</li>
+    <li><b>Quello che fai di più decide cosa diventerà.</b> Dopo un giorno di vita prende una forma: Goloso se lo nutri molto, Pulito se lo lavi, Sportivo se giocate, Sognatore se dorme, Equilibrato se fai un po' di tutto. Sono cinque, e l'album le tiene contate.</li>
+    <li><b>Giocare costa 10 di energia</b> e frutta monete. Le monete servono per medicine, bagni caldi e banchetti. Se resta senza energia, mandalo a dormire.</li>
+    <li><b>Torna ogni giorno.</b> Tre missioni nuove ogni mattina e un bonus che cresce finché non salti un giorno.</li>
+    <li><b>La sua vita è fatta del tempo che passate insieme.</b> Dopo una ventina di giornate di attenzioni va in pensione, lasciando un vantaggio alla generazione dopo. Le ore in cui sei lontano non lo invecchiano, così come non lo affamano: contano i momenti con te. Se però lo trascuri mentre ci sei, può ammalarsi e non arrivare alla fine.</li>
+  </ol>
+  <p class="hint">Stare via non è un problema: oltre otto ore lontano il tempo smette di contare, per la fame come per l'età. Lo ritrovi affamato, non perduto.</p>
+  <form method="dialog" class="foot"><button class="cta wide">Ho capito</button></form>
+</dialog>
+
+<script src="script.js"></script>
+</body>
+</html>

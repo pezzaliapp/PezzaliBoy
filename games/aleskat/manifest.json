@@ -1,0 +1,25 @@
+{
+  "name": "Aleskat – Deep Sea Survival",
+  "short_name": "ALESKAT",
+  "description": "Sopravvivi negli abissi: nuota, nutriti, cresci. Non farti divorare.",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#000d1a",
+  "theme_color": "#020b18",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "entertainment"]
+}

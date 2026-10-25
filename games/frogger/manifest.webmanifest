@@ -1,0 +1,26 @@
+{
+  "name": "Frogger — PWA (Tributo 1981)",
+  "short_name": "Frogger",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0a1228",
+  "theme_color": "#0a1228",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

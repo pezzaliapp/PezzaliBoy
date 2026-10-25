@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="it">
+<head>
+<script src="../../gbx-bridge.js"></script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Il Cubo di PezzaliApp — 3×3×3 (WebGL2, tutto nostro)</title>
+<style>
+  :root{
+    --bg:#070a10; --text:#e9eef7; --muted:#9fb0c8; --line: rgba(255,255,255,.12);
+    --panel: rgba(18,26,39,.55); --shadow: 0 18px 55px rgba(0,0,0,.45); --radius: 18px;
+    --accent:#4aa3ff; --accent2:#44d19e;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{ margin:0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    color:var(--text);
+    background:
+      radial-gradient(1100px 700px at 20% 10%, rgba(74,163,255,.18), transparent 55%),
+      radial-gradient(900px 700px at 80% 25%, rgba(68,209,158,.14), transparent 55%),
+      radial-gradient(1000px 800px at 60% 90%, rgba(255,255,255,.06), transparent 60%),
+      var(--bg);
+    overflow:hidden;
+  }
+  .app{ height:100dvh; display:grid; grid-template-columns: 1.25fr .75fr; gap:18px; padding:18px; }
+  .panel{ border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    backdrop-filter: blur(10px); overflow:hidden; min-height:0; }
+  .hdr{ padding:18px 18px 12px; border-bottom:1px solid var(--line); background:var(--panel);
+        display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  h1{margin:0;font-size:18px;letter-spacing:.3px;font-weight:950}
+  h1 .gr{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px;line-height:1.35}
+  .badge{ font-size:12px;color:var(--muted); border:1px solid var(--line); padding:6px 10px;
+          border-radius:999px; background:rgba(0,0,0,.18); white-space:nowrap; }
+  .content{padding:18px; padding-bottom:12px;}
+  .status{ display:flex;align-items:center;justify-content:space-between;gap:12px;
+           padding:12px 14px;border:1px solid var(--line);border-radius:14px; background:rgba(0,0,0,.18); }
+  .status .mini{color:var(--muted);font-size:12px}
+  #statusText{font-weight:950}
+  .pill{ font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);
+         color:var(--muted);background:rgba(255,255,255,.03); user-select:none; }
+  .pill.win{border-color:rgba(68,209,158,.5); color:#bff3df; background:rgba(68,209,158,.14)}
+
+  #viewport{ width:100%; flex:1; min-height:520px; position:relative; overflow:hidden;
+    border-top:1px solid rgba(255,255,255,.06);
+    background: radial-gradient(700px 500px at 40% 15%, rgba(255,255,255,.05), transparent 60%); }
+  canvas{ display:block; width:100%; height:100%; touch-action:none;
+    -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  .hud{ position:absolute; left:12px; bottom:12px; z-index:6; pointer-events:none;
+    background: rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.10);
+    color: rgba(255,255,255,.88); padding:10px 12px; border-radius:14px;
+    font-size:12px; backdrop-filter: blur(8px); }
+
+  .rightPanel{ display:flex; flex-direction:column; overflow:auto; -webkit-overflow-scrolling: touch; }
+  .rightPanel .hdr{ position:sticky; top:0; z-index:20; }
+  .section{padding:14px 18px;border-top:1px solid var(--line)}
+  .section:first-child{border-top:none}
+  .section h2{ margin:0 0 10px;font-size:13px;letter-spacing:.2px;color:var(--muted);
+    font-weight:950;text-transform:uppercase; display:flex;align-items:center;gap:8px}
+
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .btn{ border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--text);
+    padding:10px 12px;border-radius:14px;cursor:pointer;font-weight:900; font-size:14px;
+    transition:transform .06s ease, background .15s ease;}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{border-color: rgba(74,163,255,.35); background: rgba(74,163,255,.14)}
+  .btn.good{border-color: rgba(68,209,158,.35); background: rgba(68,209,158,.12)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.sm{padding:8px 10px;font-size:13px;border-radius:12px}
+
+  .moves{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .mv{ border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--text);
+    padding:10px 0;border-radius:12px;cursor:pointer;font-weight:950;font-size:15px;user-select:none;
+    display:flex;align-items:center;justify-content:center;gap:2px}
+  .mv .inv{font-size:11px;opacity:.7}
+  .mv:active{transform:translateY(1px)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:8px}
+  .lg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  .sw{width:14px;height:14px;border-radius:4px;border:1px solid rgba(255,255,255,.25)}
+
+  .score{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .card{border:1px solid var(--line);border-radius:16px;background:rgba(0,0,0,.16);padding:12px;}
+  .k{font-size:12px;color:var(--muted);font-weight:950;letter-spacing:.3px;text-transform:uppercase;margin-bottom:6px}
+  .v{font-size:22px;font-weight:950;font-variant-numeric:tabular-nums}
+  .hint{font-size:12px;color:var(--muted);line-height:1.5;margin:8px 0 0}
+
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .row label{font-size:13px;font-weight:800;min-width:62px}
+  select,input[type=text],input[type=number]{
+    background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line);
+    padding:8px 10px;border-radius:10px;font-weight:700;font-size:14px}
+  input[type=text]{flex:1;min-width:90px}
+  .facebtns{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+  .fb{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);
+    padding:8px 0;border-radius:10px;cursor:pointer;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px}
+  .fb.active{border-color:rgba(74,163,255,.6);background:rgba(74,163,255,.16)}
+  .fb .dot{width:12px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.3)}
+  .toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .toggle .lab{font-size:13px;font-weight:800}
+  .switch{width:46px;height:26px;border-radius:999px;border:1px solid var(--line);
+    background:rgba(255,255,255,.04);position:relative;cursor:pointer;flex:0 0 auto}
+  .knob{width:20px;height:20px;border-radius:999px;background:rgba(255,255,255,.75);
+    position:absolute;top:2px;left:2px;transition:left .18s ease}
+  .switch.on{border-color:rgba(74,163,255,.35);background:rgba(74,163,255,.14)}
+  .switch.on .knob{left:24px;background:rgba(255,255,255,.92)}
+  .toast{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:40;
+    background:rgba(10,14,22,.92);border:1px solid var(--line);border-radius:12px;
+    padding:8px 14px;font-size:13px;font-weight:800;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.show{opacity:1}
+
+  .errorbox{ position:absolute; inset:0; display:none; place-items:center; z-index:50;
+    background: rgba(0,0,0,.55); backdrop-filter: blur(8px); padding:18px; }
+  .errorcard{ width:min(720px,100%); border:1px solid rgba(255,255,255,.14); border-radius:18px;
+    background: rgba(10,14,22,.72); padding:16px; box-shadow: var(--shadow); }
+  .errorcard pre{ white-space:pre-wrap; color: rgba(255,255,255,.85); background: rgba(0,0,0,.25);
+    border:1px solid rgba(255,255,255,.10); border-radius:14px; padding:12px;margin:10px 0 0; font-size:12px; }
+
+  @media (max-width: 900px){
+    body{ overflow:auto; padding-bottom: env(safe-area-inset-bottom); }
+    .app{ height:auto; grid-template-columns:1fr; padding:14px; gap:14px; }
+    #viewport{ height:56svh; min-height:360px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel" style="display:flex; flex-direction:column;">
+    <div class="hdr">
+      <div>
+        <h1>Il <span class="gr">Cubo di PezzaliApp</span> — 3×3×3</h1>
+        <div class="sub">Motore WebGL2 nostro, senza librerie. Trascina una faccia per ruotare; drag fuori = orbita.</div>
+      </div>
+      <div class="badge" id="verBadge">v2 · WebGL2</div>
+    </div>
+    <div class="content">
+      <div class="status" aria-live="polite">
+        <div>
+          <div class="mini">Stato</div>
+          <div id="statusText">Pronto. Premi “Mischia”.</div>
+        </div>
+        <div class="pill" id="solvedPill">—</div>
+      </div>
+    </div>
+    <div id="viewport">
+      <canvas id="gl"></canvas>
+      <div class="hud">Drag faccia = ruota • Drag fuori = orbita • Scroll/Pinch = zoom</div>
+      <div class="toast" id="toast"></div>
+      <div class="errorbox" id="errorbox"><div class="errorcard">
+        <h3 style="margin:0 0 6px">WebGL non avviato</h3>
+        <div class="hint">Contesto WebGL2 non creato o shader bloccati.</div>
+        <pre id="errortext"></pre>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="panel rightPanel">
+    <div class="hdr"><div><h1>Controlli</h1><div class="sub">Gioco, personalizzazione e sfide.</div></div><div class="badge">PezzaliApp</div></div>
+
+    <div class="section">
+      <h2>Partita</h2>
+      <div class="controls">
+        <button class="btn primary" id="scrambleBtn">Mischia</button>
+        <button class="btn good" id="resetBtn">Reset cubo</button>
+        <button class="btn" id="undoBtn">↶ Annulla</button>
+        <button class="btn" id="redoBtn">↷ Ripeti</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Personalizza facce</h2>
+      <div class="facebtns" id="faceBtns"></div>
+      <div class="row">
+        <label for="modeSel">Modalità</label>
+        <select id="modeSel">
+          <option value="color">Colore</option>
+          <option value="number">Numero</option>
+          <option value="letter">Lettera</option>
+          <option value="text">Testo</option>
+          <option value="emoji">Emoji</option>
+          <option value="image">Immagine</option>
+        </select>
+      </div>
+      <div class="row" id="rowColor"><label for="colorInp">Colore</label><input type="text" id="colorInp" placeholder="#2BD96B" /></div>
+      <div class="row" id="rowText" style="display:none"><label for="textInp">Testo</label><input type="text" id="textInp" maxlength="3" placeholder="max 3" /></div>
+      <div class="row" id="rowEmoji" style="display:none"><label for="emojiInp">Emoji</label><input type="text" id="emojiInp" maxlength="4" placeholder="😀" /></div>
+      <div class="row" id="rowImage" style="display:none"><label for="imgInp">Immagine</label><input type="file" id="imgInp" accept="image/*" /></div>
+      <div class="controls">
+        <button class="btn sm" id="resetFacesBtn">Reset facce</button>
+        <button class="btn sm" id="copyLinkBtn">Copia link</button>
+        <button class="btn sm" id="exportCfgBtn">Esporta JSON</button>
+        <button class="btn sm" id="importCfgBtn">Importa JSON</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none" />
+      </div>
+      <p class="hint">Le scelte restano salvate sul dispositivo e nel link condivisibile.</p>
+    </div>
+
+    <div class="section">
+      <h2>Sfide</h2>
+      <div class="controls" id="patternBtns"></div>
+      <div class="controls" style="margin-top:10px">
+        <button class="btn sm" id="memoBtn">Memo (5s)</button>
+        <button class="btn sm" id="pngBtn">Salva PNG</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Opzioni</h2>
+      <div class="toggle"><div class="lab">Suoni</div><div class="switch" id="swSound"><div class="knob"></div></div></div>
+      <div class="toggle"><div class="lab">Vibrazione</div><div class="switch" id="swVibe"><div class="knob"></div></div></div>
+      <div class="toggle"><div class="lab">Daltonica (simboli)</div><div class="switch" id="swCB"><div class="knob"></div></div></div>
+    </div>
+
+    <div class="section"><h2>Mosse</h2><div class="moves" id="moveGrid"></div>
+      <p class="hint">Orario; ’ = inverso. Tastiera: U D L R F B (Shift = inverso).</p></div>
+
+    <div class="section"><h2>Facce</h2><div class="legend" id="legend"></div></div>
+
+    <div class="section"><h2>Statistiche</h2>
+      <div class="score">
+        <div class="card"><div class="k">Tempo</div><div class="v" id="timeV">00:00.0</div></div>
+        <div class="card"><div class="k">Mosse</div><div class="v" id="moveV">0</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<canvas id="atlasScratch" width="384" height="384" style="display:none"></canvas>
+
+<script>
+(() => {
+  "use strict";
+  const VERSION='2.0.0';
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const $=(id)=>document.getElementById(id);
+  const showError=(m)=>{const e=$('errortext');if(e)e.textContent=m;const b=$('errorbox');if(b)b.style.display='grid';};
+
+  // ===== mat4 (column-major) =====
+  const mat4={
+    I:()=>{const m=new Float32Array(16);m[0]=m[5]=m[10]=m[15]=1;return m;},
+    mul:(a,b)=>{const o=new Float32Array(16);
+      for(let c=0;c<4;c++)for(let r=0;r<4;r++)
+        o[c*4+r]=a[0*4+r]*b[c*4+0]+a[1*4+r]*b[c*4+1]+a[2*4+r]*b[c*4+2]+a[3*4+r]*b[c*4+3];
+      return o;},
+    rotX:(A)=>{const m=mat4.I(),c=Math.cos(A),s=Math.sin(A);m[5]=c;m[9]=-s;m[6]=s;m[10]=c;return m;},
+    rotY:(A)=>{const m=mat4.I(),c=Math.cos(A),s=Math.sin(A);m[0]=c;m[8]=s;m[2]=-s;m[10]=c;return m;},
+    rotZ:(A)=>{const m=mat4.I(),c=Math.cos(A),s=Math.sin(A);m[0]=c;m[4]=-s;m[1]=s;m[5]=c;return m;},
+    rotAxis:(ax,A)=>ax===0?mat4.rotX(A):ax===1?mat4.rotY(A):mat4.rotZ(A),
+    persp:(f,asp,n,fa)=>{const t=1/Math.tan(f/2),m=new Float32Array(16);
+      m[0]=t/asp;m[5]=t;m[10]=(fa+n)/(n-fa);m[11]=-1;m[14]=(2*fa*n)/(n-fa);return m;},
+    lookAt:(e,t,u)=>{
+      let zx=e[0]-t[0],zy=e[1]-t[1],zz=e[2]-t[2];const zL=Math.hypot(zx,zy,zz)||1;zx/=zL;zy/=zL;zz/=zL;
+      let xx=u[1]*zz-u[2]*zy,xy=u[2]*zx-u[0]*zz,xz=u[0]*zy-u[1]*zx;const xL=Math.hypot(xx,xy,xz)||1;xx/=xL;xy/=xL;xz/=xL;
+      const yx=zy*xz-zz*xy,yy=zz*xx-zx*xz,yz=zx*xy-zy*xx;const m=mat4.I();
+      m[0]=xx;m[4]=xy;m[8]=xz; m[1]=yx;m[5]=yy;m[9]=yz; m[2]=zx;m[6]=zy;m[10]=zz;
+      m[12]=-(xx*e[0]+xy*e[1]+xz*e[2]); m[13]=-(yx*e[0]+yy*e[1]+yz*e[2]); m[14]=-(zx*e[0]+zy*e[1]+zz*e[2]);
+      return m;},
+    fromM3T:(m3,t)=>{const m=new Float32Array(16);
+      for(let r=0;r<3;r++)for(let c=0;c<3;c++) m[c*4+r]=m3[r*3+c];
+      m[12]=t[0];m[13]=t[1];m[14]=t[2];m[15]=1;return m;}
+  };
+  // ===== integer 3x3 rotations =====
+  const ID3=[1,0,0,0,1,0,0,0,1];
+  const RX=[1,0,0,0,0,-1,0,1,0], RY=[0,0,1,0,1,0,-1,0,0], RZ=[0,-1,0,1,0,0,0,0,1];
+  const Tp=m=>[m[0],m[3],m[6],m[1],m[4],m[7],m[2],m[5],m[8]];
+  const RXi=Tp(RX),RYi=Tp(RY),RZi=Tp(RZ);
+  const rotInt=(ax,d)=>ax===0?(d>0?RX:RXi):ax===1?(d>0?RY:RYi):(d>0?RZ:RZi);
+  const m3mul=(A,B)=>{const o=new Array(9);for(let r=0;r<3;r++)for(let c=0;c<3;c++)o[r*3+c]=A[r*3]*B[c]+A[r*3+1]*B[3+c]+A[r*3+2]*B[6+c];return o;};
+  const m3vec=(M,v)=>[M[0]*v[0]+M[1]*v[1]+M[2]*v[2],M[3]*v[0]+M[4]*v[1]+M[5]*v[2],M[6]*v[0]+M[7]*v[1]+M[8]*v[2]];
+  const isID=(m)=>{for(let i=0;i<9;i++) if(m[i]!==ID3[i]) return false; return true;};
+
+  // ===== WebGL2 =====
+  const canvas=$('gl'); canvas.style.touchAction='none';
+  const gl=canvas.getContext('webgl2',{antialias:true,alpha:true,depth:true,preserveDrawingBuffer:true});
+  if(!gl){ showError('Impossibile creare WebGL2. Usa un browser aggiornato.'); return; }
+  const compile=(t,src)=>{const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);
+    if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){const i=gl.getShaderInfoLog(s);gl.deleteShader(s);throw new Error(i);}return s;};
+  const link=(vs,fs)=>{const p=gl.createProgram();gl.attachShader(p,vs);gl.attachShader(p,fs);gl.linkProgram(p);
+    if(!gl.getProgramParameter(p,gl.LINK_STATUS)){const i=gl.getProgramInfoLog(p);gl.deleteProgram(p);throw new Error(i);}return p;};
+
+  const vsLit=`#version 300 es
+  precision highp float;
+  layout(location=0) in vec3 aPos; layout(location=1) in vec3 aNor; layout(location=2) in vec3 aCol;
+  uniform mat4 uVP,uModel; out vec3 vN; out vec3 vP; out vec3 vC;
+  void main(){ vec4 p=uModel*vec4(aPos,1.0); gl_Position=uVP*p; vP=p.xyz; vN=mat3(uModel)*aNor; vC=aCol; }`;
+  const fsLit=`#version 300 es
+  precision highp float; in vec3 vN; in vec3 vP; in vec3 vC; out vec4 o;
+  void main(){ vec3 n=normalize(vN); float d=max(dot(n,normalize(vec3(0.5,1.0,0.75))),0.0);
+    float rim=pow(1.0-max(dot(n,normalize(-vP)),0.0),2.5);
+    o=vec4(vC*(0.42+0.66*d)+vec3(0.10)*rim,1.0); }`;
+  const vsTex=`#version 300 es
+  precision highp float;
+  layout(location=0) in vec3 aPos; layout(location=1) in vec3 aNor; layout(location=2) in vec2 aUV;
+  uniform mat4 uVP,uModel; out vec3 vN; out vec3 vP; out vec2 vUV;
+  void main(){ vec4 p=uModel*vec4(aPos,1.0); gl_Position=uVP*p; vP=p.xyz; vN=mat3(uModel)*aNor; vUV=aUV; }`;
+  const fsTex=`#version 300 es
+  precision highp float; in vec3 vN; in vec3 vP; in vec2 vUV; out vec4 o; uniform sampler2D uTex;
+  void main(){ vec3 n=normalize(vN); float d=max(dot(n,normalize(vec3(0.5,1.0,0.75))),0.0);
+    float rim=pow(1.0-max(dot(n,normalize(-vP)),0.0),2.5);
+    vec3 base=texture(uTex,vUV).rgb;
+    o=vec4(base*(0.5+0.6*d)+vec3(0.08)*rim,1.0); }`;
+  const vsPick=`#version 300 es
+  precision highp float;
+  layout(location=0) in vec3 aPos; layout(location=3) in float aFace;
+  uniform mat4 uVP,uModel; flat out float vFace;
+  void main(){ vFace=aFace; gl_Position=uVP*(uModel*vec4(aPos,1.0)); }`;
+  const fsPick=`#version 300 es
+  precision highp float; flat in float vFace; out vec4 o; uniform float uBase;
+  void main(){ float code=uBase+vFace; o=vec4(mod(code,256.0)/255.0, mod(floor(code/256.0),256.0)/255.0, floor(code/65536.0)/255.0, 1.0); }`;
+
+  let PLIT,PTEX,PPICK;
+  try{
+    PLIT=link(compile(gl.VERTEX_SHADER,vsLit),compile(gl.FRAGMENT_SHADER,fsLit));
+    PTEX=link(compile(gl.VERTEX_SHADER,vsTex),compile(gl.FRAGMENT_SHADER,fsTex));
+    PPICK=link(compile(gl.VERTEX_SHADER,vsPick),compile(gl.FRAGMENT_SHADER,fsPick));
+  }catch(e){ showError('Shader error:\n'+(e.message||e)); return; }
+  const U=(p,n)=>gl.getUniformLocation(p,n);
+  const uLitVP=U(PLIT,'uVP'),uLitM=U(PLIT,'uModel');
+  const uTexVP=U(PTEX,'uVP'),uTexM=U(PTEX,'uModel'),uTexS=U(PTEX,'uTex');
+  const uPickVP=U(PPICK,'uVP'),uPickM=U(PPICK,'uModel'),uPickB=U(PPICK,'uBase');
+
+  // ===== faces / colours =====
+  const N=3, H=0.46, STK=0.40, LIFT=H+0.012;
+  const hex2rgb=(h)=>{h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');
+    return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];};
+  const DEFCOL={0:'#E23B3B',1:'#FF8C1A',2:'#F4F4F4',3:'#FFD400',4:'#2BD96B',5:'#2E7BE6'};
+  const FACE_NAME={0:'Destra (R)',1:'Sinistra (L)',2:'Su (U)',3:'Giù (D)',4:'Fronte (F)',5:'Retro (B)'};
+  const FACES=[
+    {ax:0,s:+1,nor:[1,0,0],  v:[[H,-H,-H],[H,H,-H],[H,H,H],[H,-H,H]]},
+    {ax:0,s:-1,nor:[-1,0,0], v:[[-H,-H,H],[-H,H,H],[-H,H,-H],[-H,-H,-H]]},
+    {ax:1,s:+1,nor:[0,1,0],  v:[[-H,H,-H],[-H,H,H],[H,H,H],[H,H,-H]]},
+    {ax:1,s:-1,nor:[0,-1,0], v:[[-H,-H,H],[-H,-H,-H],[H,-H,-H],[H,-H,H]]},
+    {ax:2,s:+1,nor:[0,0,1],  v:[[-H,-H,H],[H,-H,H],[H,H,H],[-H,H,H]]},
+    {ax:2,s:-1,nor:[0,0,-1], v:[[H,-H,-H],[-H,-H,-H],[-H,H,-H],[H,H,-H]]}
+  ];
+  // per-face basis: col along (uAxis,uSign), row(top=large) along (vAxis,vSign)
+  const BASIS={
+    0:{uAxis:2,uSign:-1,vAxis:1,vSign:+1},
+    1:{uAxis:2,uSign:+1,vAxis:1,vSign:+1},
+    2:{uAxis:0,uSign:+1,vAxis:2,vSign:-1},
+    3:{uAxis:0,uSign:+1,vAxis:2,vSign:+1},
+    4:{uAxis:0,uSign:+1,vAxis:1,vSign:+1},
+    5:{uAxis:0,uSign:-1,vAxis:1,vSign:+1}
+  };
+  const tileOf=(f,g)=>{const b=BASIS[f];
+    const col=1+g[b.uAxis]*b.uSign;
+    const row=1-g[b.vAxis]*b.vSign;
+    return {row,col};};
+
+  // ===== face textures (atlas, our own CanvasTexture) =====
+  const TILE=128, ATL=N*TILE;
+  const scratch=$('atlasScratch'); scratch.width=ATL; scratch.height=ATL;
+  const ctx=scratch.getContext('2d');
+  const DARK=hex2rgb('#14181f').map(x=>x/255);
+  const faceCfg={}; for(let f=0;f<6;f++) faceCfg[f]={mode:'color',color:DEFCOL[f],text:'',emoji:'',image:null};
+  const faceImg={}; // loaded Image per face for 'image' mode
+  const faceTex={}; // GL texture per face
+  let colorblind=false;
+
+  const lum=(rgb)=>0.2126*rgb[0]+0.7152*rgb[1]+0.0722*rgb[2];
+  function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+  function drawCBSymbol(cx,cy,n,col){ // simple distinct dots count by face
+    ctx.fillStyle=col; for(let i=0;i<n;i++){ const a=i/n*Math.PI*2; ctx.beginPath();
+      ctx.arc(cx+Math.cos(a)*22, cy+Math.sin(a)*22, 5,0,Math.PI*2); ctx.fill(); }}
+
+  function paintFace(f){
+    const cfg=faceCfg[f]; const rgb=hex2rgb(cfg.color); const css=`rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+    const ink = lum(rgb.map(x=>x/255))>0.55 ? '#15202b' : '#ffffff';
+    ctx.clearRect(0,0,ATL,ATL);
+    for(let row=0;row<N;row++)for(let col=0;col<N;col++){
+      const x=col*TILE, y=row*TILE, pad=8;
+      // plastic gap
+      ctx.fillStyle='#0c0f15'; ctx.fillRect(x,y,TILE,TILE);
+      // base sticker
+      ctx.fillStyle=css; roundRect(x+pad,y+pad,TILE-2*pad,TILE-2*pad,16); ctx.fill();
+      const cx=x+TILE/2, cy=y+TILE/2;
+      const idx=row*N+col;
+      if(cfg.mode==='image' && faceImg[f]){
+        const im=faceImg[f]; const sw=im.width/N, sh=im.height/N;
+        ctx.save(); roundRect(x+pad,y+pad,TILE-2*pad,TILE-2*pad,16); ctx.clip();
+        ctx.drawImage(im, col*sw,row*sh,sw,sh, x+pad,y+pad,TILE-2*pad,TILE-2*pad); ctx.restore();
+      } else if(cfg.mode==='number'){
+        ctx.fillStyle=ink; ctx.font='900 56px ui-sans-serif,system-ui,Arial';
+        ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(String(idx+1),cx,cy);
+      } else if(cfg.mode==='letter'){
+        ctx.fillStyle=ink; ctx.font='900 60px ui-sans-serif,system-ui,Arial';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(String.fromCharCode(65+idx),cx,cy);
+      } else if(cfg.mode==='emoji'){
+        const e=cfg.emoji||'😀'; const ch=[...e]; const g=ch.length?ch[idx%ch.length]:'😀';
+        ctx.font='72px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(g,cx,cy);
+      } else if(cfg.mode==='text'){
+        const t=[...(cfg.text||'')]; if(row===1 && t[col]!==undefined){
+          ctx.fillStyle=ink; ctx.font='900 64px ui-sans-serif,system-ui,Arial';
+          ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(t[col],cx,cy);
+        }
+      }
+      if(colorblind) drawCBSymbol(cx,cy,f+1, ink==='#ffffff'?'rgba(0,0,0,.5)':'rgba(255,255,255,.6)');
+    }
+    // upload
+    let tex=faceTex[f]; if(!tex){tex=gl.createTexture();faceTex[f]=tex;}
+    gl.bindTexture(gl.TEXTURE_2D,tex);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,scratch);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D,null);
+  }
+  function paintAllFaces(){ for(let f=0;f<6;f++) paintFace(f); }
+
+  // ===== geometry =====
+  function buildCubie(g){
+    // body
+    const bpos=[],bnor=[],bcol=[],bface=[];
+    const stickers=[];
+    const tri=[0,1,2,0,2,3];
+    for(let fi=0;fi<6;fi++){
+      const F=FACES[fi];
+      for(const k of tri){ const p=F.v[k]; bpos.push(p[0],p[1],p[2]); bnor.push(F.nor[0],F.nor[1],F.nor[2]); bcol.push(DARK[0],DARK[1],DARK[2]); bface.push(fi); }
+      if(g[F.ax]===F.s){
+        const t=tileOf(fi,g); const b=BASIS[fi];
+        const spos=[],snor=[],suv=[];
+        const sv=F.v.map(p=>{const q=[p[0],p[1],p[2]];for(let a=0;a<3;a++){ if(a===F.ax)q[a]=LIFT*F.s; else q[a]=Math.sign(q[a])*STK; }return q;});
+        for(const k of tri){
+          const p=sv[k];
+          const ul=((p[b.uAxis]*b.uSign)/STK+1)/2;      // 0 left .. 1 right
+          const bup=((p[b.vAxis]*b.vSign)/STK+1)/2;     // 0 bottom .. 1 top
+          const s=(t.col+ul)/N;
+          const tt=(t.row+(1-bup))/N;                   // canvas top = small t
+          spos.push(p[0],p[1],p[2]); snor.push(F.nor[0],F.nor[1],F.nor[2]); suv.push(s,tt);
+        }
+        const vao=gl.createVertexArray(); gl.bindVertexArray(vao);
+        const mk=(loc,arr,comp)=>{const bf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,bf);
+          gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(arr),gl.STATIC_DRAW);
+          gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,comp,gl.FLOAT,false,0,0);};
+        mk(0,spos,3); mk(1,snor,3); mk(2,suv,2);
+        gl.bindVertexArray(null);
+        stickers.push({faceId:fi, vao, count:spos.length/3});
+      }
+    }
+    const bvao=gl.createVertexArray(); gl.bindVertexArray(bvao);
+    const mk=(loc,arr,comp)=>{const bf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,bf);
+      gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(arr),gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,comp,gl.FLOAT,false,0,0);};
+    mk(0,bpos,3); mk(1,bnor,3); mk(2,bcol,3); mk(3,bface,1);
+    gl.bindVertexArray(null);
+    return {bvao,bcount:bpos.length/3,stickers};
+  }
+
+  let cubies=[];
+  function buildCube(){
+    cubies=[];
+    for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++){
+      if(x===0&&y===0&&z===0) continue;
+      cubies.push({home:[x,y,z],pos:[x,y,z],orient:ID3.slice(),geo:buildCubie([x,y,z])});
+    }
+  }
+  buildCube();
+  const isSolved=()=>cubies.every(c=>c.pos[0]===c.home[0]&&c.pos[1]===c.home[1]&&c.pos[2]===c.home[2]&&isID(c.orient));
+
+  // ===== camera =====
+  const IS_MOBILE=window.matchMedia('(max-width:900px)').matches;
+  let theta=0.7, phi=1.0, radius=IS_MOBILE?7.6:6.6;
+  const getEye=()=>[radius*Math.cos(theta)*Math.sin(phi),radius*Math.cos(phi),radius*Math.sin(theta)*Math.sin(phi)];
+  function setCanvasSize(){
+    const dpr=Math.min(2,window.devicePixelRatio||1);
+    const W=(canvas.clientWidth*dpr)|0,Hc=(canvas.clientHeight*dpr)|0;
+    if(canvas.width!==W||canvas.height!==Hc){canvas.width=W;canvas.height=Hc;ensurePick(W,Hc);}
+    return {W,H:Hc};
+  }
+  const getVP=(W,Hh)=>mat4.mul(mat4.persp(45*Math.PI/180,W/Math.max(1,Hh),0.1,100),mat4.lookAt(getEye(),[0,0,0],[0,1,0]));
+
+  // ===== pick fbo =====
+  let pFbo=null,pTex=null,pDep=null,pW=0,pH=0;
+  let gAx=-1,gLayer=0,gAng=0;   // stato di rotazione corrente (aggiornato in draw) per il picking on-demand
+  function ensurePick(w,h){
+    if(pTex&&pW===w&&pH===h)return; pW=w;pH=h;
+    if(pFbo){gl.deleteFramebuffer(pFbo);gl.deleteTexture(pTex);gl.deleteRenderbuffer(pDep);}
+    pFbo=gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER,pFbo);
+    pTex=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,pTex);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,pTex,0);
+    pDep=gl.createRenderbuffer(); gl.bindRenderbuffer(gl.RENDERBUFFER,pDep);
+    gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,w,h);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,pDep);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  }
+
+  // ===== animation / moves =====
+  // anim: animazione "a scatto" (pulsanti/tastiera/snap del drag). Forma unificata:
+  //   {ax,layer, from,to (rad), dir, record, commit, t0, dur}. Si interpola from→to; a fine
+  //   corsa, SOLO se commit, si applica la mossa intera (commitMove) → stato sempre coerente.
+  // live: rotazione continua mentre il dito trascina (nessun commit finché non si rilascia).
+  let anim=null,live=null; const queue=[]; const DUR=160, HALF=Math.PI/2, TURN_LIM=HALF*1.06, FLICK_PXS=620;
+  const modelOf=(c,extra)=>{const base=mat4.fromM3T(c.orient,[c.pos[0],c.pos[1],c.pos[2]]);return extra?mat4.mul(extra,base):base;};
+  function commitMove(ax,layer,dir){const Ri=rotInt(ax,dir);
+    for(const c of cubies) if(c.pos[ax]===layer){c.pos=m3vec(Ri,c.pos).map(Math.round);c.orient=m3mul(Ri,c.orient);}}
+  const enqueue=(ax,layer,dir,record=true)=>queue.push({ax,layer,dir,record});
+  function startNext(){ if(anim||live||!queue.length)return; const m=queue.shift();
+    anim={ax:m.ax,layer:m.layer,from:0,to:m.dir*HALF,dir:m.dir,record:m.record,commit:true,t0:performance.now(),dur:DUR}; }
+
+  // ===== history =====
+  let history=[],hIdx=0;
+  function pushHistory(ax,layer,dir){history.length=hIdx;history.push({ax,layer,dir});hIdx++;updateButtons();}
+  function doMove(ax,layer,dir,record=true){enqueue(ax,layer,dir,record);if(record)onUserMove();}
+  function undo(){if(anim||hIdx<=0)return;const m=history[hIdx-1];hIdx--;enqueue(m.ax,m.layer,-m.dir,false);moveCount++;updateStats();updateButtons();}
+  function redo(){if(anim||hIdx>=history.length)return;const m=history[hIdx];hIdx++;enqueue(m.ax,m.layer,m.dir,false);moveCount++;updateStats();updateButtons();}
+
+  // ===== stats =====
+  let moveCount=0,startT=0,timerRunning=false,scrambled=false;
+  const statusText=$('statusText'),solvedPill=$('solvedPill'),timeV=$('timeV'),moveV=$('moveV');
+  const setStatus=(t)=>statusText.textContent=t;
+  const fmt=(ms)=>{const s=ms/1000,m=Math.floor(s/60),r=s-m*60;return String(m).padStart(2,'0')+':'+r.toFixed(1).padStart(4,'0');};
+  const updateStats=()=>moveV.textContent=moveCount;
+  function onUserMove(){ if(scrambled&&!timerRunning){timerRunning=true;startT=performance.now();} moveCount++;updateStats(); beep(); vibe(); }
+  function checkSolved(){
+    if(isSolved()){ solvedPill.textContent='RISOLTO ✓'; solvedPill.classList.add('win');
+      if(scrambled){timerRunning=false;setStatus(`Risolto in ${moveCount} mosse!`);scrambled=false; chime();} }
+    else { solvedPill.textContent=scrambled?'mescolato':'—'; solvedPill.classList.remove('win'); }
+  }
+
+  // ===== sound / vibration =====
+  let sound=false,vibrate=false,actx=null;
+  function ac(){ if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(_){}} return actx; }
+  function tone(freq,dur,vol){ if(!sound)return; const a=ac(); if(!a)return;
+    const o=a.createOscillator(),g=a.createGain(); o.frequency.value=freq; o.type='triangle';
+    g.gain.value=vol; o.connect(g); g.connect(a.destination); o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+dur); o.stop(a.currentTime+dur); }
+  const beep=()=>tone(420,0.06,0.04);
+  const chime=()=>{tone(660,0.12,0.05);setTimeout(()=>tone(880,0.16,0.05),90);};
+  const vibe=()=>{ if(vibrate&&navigator.vibrate)navigator.vibrate(12); };
+
+  // ===== render =====
+  function draw(){
+    const {W,H}=setCanvasSize(); const VP=getVP(W,H);
+    let aAx=-1,aLayer=0,aAng=0;
+    if(anim){
+      const t=clamp((performance.now()-anim.t0)/anim.dur,0,1);
+      const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+      aAng=anim.from+(anim.to-anim.from)*e; aAx=anim.ax; aLayer=anim.layer;
+      if(t>=1){ if(anim.commit){ commitMove(anim.ax,anim.layer,anim.dir); if(anim.record)pushHistory(anim.ax,anim.layer,anim.dir); } anim=null; checkSolved(); }
+    } else if(live){ aAx=live.rAxis; aLayer=live.layer; aAng=live.angle; }
+    gAx=aAx; gLayer=aLayer; gAng=aAng;          // ricorda lo stato per il picking on-demand (vedi renderPick)
+    const extraOf=(c)=>(aAx>=0&&c.pos[aAx]===aLayer)?mat4.rotAxis(aAx,aAng):null;
+
+    // FLUIDITÀ: il picking NON viene più renderizzato a ogni frame (raddoppiava i draw call e
+    // faceva cadere gli fps su mobile → drag a scatti). Ora si disegna solo quando serve, in pickAt().
+    // main
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null); gl.viewport(0,0,canvas.width,canvas.height);
+    gl.enable(gl.DEPTH_TEST); gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+    // bodies
+    gl.useProgram(PLIT); gl.uniformMatrix4fv(uLitVP,false,VP);
+    for(const c of cubies){ gl.uniformMatrix4fv(uLitM,false,modelOf(c,extraOf(c)));
+      gl.bindVertexArray(c.geo.bvao); gl.drawArrays(gl.TRIANGLES,0,c.geo.bcount); }
+    // stickers
+    gl.useProgram(PTEX); gl.uniformMatrix4fv(uTexVP,false,VP); gl.uniform1i(uTexS,0); gl.activeTexture(gl.TEXTURE0);
+    for(const c of cubies){ const M=modelOf(c,extraOf(c)); gl.uniformMatrix4fv(uTexM,false,M);
+      for(const s of c.geo.stickers){ gl.bindTexture(gl.TEXTURE_2D,faceTex[s.faceId]); gl.bindVertexArray(s.vao); gl.drawArrays(gl.TRIANGLES,0,s.count); } }
+    gl.bindVertexArray(null);
+
+    startNext();
+    if(timerRunning) timeV.textContent=fmt(performance.now()-startT);
+    requestAnimationFrame(draw);
+  }
+  // Disegna la passata di picking nel framebuffer pFbo usando lo stato di rotazione corrente (g*).
+  // Chiamata solo al bisogno (pointerdown), non a ogni frame → niente doppia renderizzazione.
+  function renderPick(VP){
+    const extra=(c)=>(gAx>=0&&c.pos[gAx]===gLayer)?mat4.rotAxis(gAx,gAng):null;
+    gl.bindFramebuffer(gl.FRAMEBUFFER,pFbo); gl.viewport(0,0,pW,pH);
+    gl.enable(gl.DEPTH_TEST); gl.disable(gl.BLEND); gl.clearColor(0,0,0,1);
+    gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+    gl.useProgram(PPICK); gl.uniformMatrix4fv(uPickVP,false,VP);
+    for(let i=0;i<cubies.length;i++){const c=cubies[i];
+      gl.uniformMatrix4fv(uPickM,false,modelOf(c,extra(c))); gl.uniform1f(uPickB,i*6+1);
+      gl.bindVertexArray(c.geo.bvao); gl.drawArrays(gl.TRIANGLES,0,c.geo.bcount);}
+  }
+  function pickAt(cx,cy){
+    const {W,H:Hh}=setCanvasSize(); if(!pFbo)return null; renderPick(getVP(W,Hh));
+    const rect=canvas.getBoundingClientRect(); const dpr=Math.min(2,window.devicePixelRatio||1);
+    const px=clamp(Math.round((cx-rect.left)*dpr),0,pW-1), py=clamp(Math.round((rect.height-(cy-rect.top))*dpr),0,pH-1);
+    const buf=new Uint8Array(4);
+    gl.readPixels(px,py,1,1,gl.RGBA,gl.UNSIGNED_BYTE,buf); gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    const code=buf[0]+(buf[1]<<8)+(buf[2]<<16); if(!code)return null;
+    const id=code-1; return {cubie:Math.floor(id/6),face:id%6};
+  }
+
+  // ===== input =====
+  const pointers=new Map(); let mode=null,lastX=0,lastY=0,downX=0,downY=0,grab=null,pinchDist=0,velX=0,velY=0,tPrev=0;
+  const grabInfo=(p)=>{const c=cubies[p.cubie],F=FACES[p.face]; const wn=m3vec(c.orient,F.nor);
+    return {worldNormal:wn,worldPos:[c.pos[0]+wn[0]*H,c.pos[1]+wn[1]*H,c.pos[2]+wn[2]*H]};};
+  function project(VP,p){const x=VP[0]*p[0]+VP[4]*p[1]+VP[8]*p[2]+VP[12],y=VP[1]*p[0]+VP[5]*p[1]+VP[9]*p[2]+VP[13],w=VP[3]*p[0]+VP[7]*p[1]+VP[11]*p[2]+VP[15];
+    const rect=canvas.getBoundingClientRect(); return [(x/w*0.5+0.5)*rect.width,(1-(y/w*0.5+0.5))*rect.height];}
+  const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+  const absMax=(v)=>{const a=[Math.abs(v[0]),Math.abs(v[1]),Math.abs(v[2])];return a.indexOf(Math.max(a[0],a[1],a[2]));};
+  // Ruota un punto-mondo attorno a un asse coordinato con la STESSA convenzione di mat4.rotX/Y/Z
+  // (trasformazione M*v): così anteprima live, snap e commit intero non possono mai discordare sul segno.
+  function rotPt(p,ax,A){const c=Math.cos(A),s=Math.sin(A),x=p[0],y=p[1],z=p[2];
+    if(ax===0)return[x,c*y-s*z,s*y+c*z];
+    if(ax===1)return[c*x+s*z,y,-s*x+c*z];
+    return[c*x-s*y,s*x+c*y,z];}
+
+  // OBIETTIVO 1 — SEGNO DEL DRAG (analisi). Tutto è calcolato in spazio-MONDO con la normale reale
+  // della faccia toccata (il picking la codifica in vFace), quindi è INVARIANTE rispetto all'orbita
+  // della camera: niente inversioni in nessun angolo di vista. Procedimento:
+  //   • scelgo come tangente t l'asse in-piano la cui proiezione a schermo segue meglio il dito;
+  //   • asse di rotazione  ω = n × t.  La velocità di superficie è v = ω × r e, sviluppando,
+  //     v = t·(n·r) − n·(t·r); su OGNI faccia esterna afferrabile n·r = 1 + H > 0, quindi la
+  //     componente in-piano di v è lungo +t ⇒ la superficie segue SEMPRE il dito (verso corretto).
+  //   • dir = sign(ω[rAxis]) e l'animazione usano la stessa famiglia rotX/Y/Z ⇒ segno coerente.
+  // Conclusione: il segno era già corretto; qui lo riuso per la rotazione continua (obiettivo 2).
+  // Blocca l'asse/strato dal primo trascinamento e prepara la conversione dito→angolo. Ritorna live|null.
+  function beginLiveTurn(dx,dy){
+    if(anim||!grab)return null;
+    const {W,H:HH}=setCanvasSize(); const VP=getVP(W,HH);
+    const n=grab.worldNormal,nAx=absMax(n),inPlane=[0,1,2].filter(a=>a!==nAx);
+    const base=project(VP,grab.worldPos); let best=null,bestSd=null;
+    for(const a of inPlane){ const ahead=grab.worldPos.slice(); ahead[a]+=0.5; const sp=project(VP,ahead);
+      let sd=[sp[0]-base[0],sp[1]-base[1]]; const L=Math.hypot(sd[0],sd[1])||1; sd=[sd[0]/L,sd[1]/L];
+      const proj=dx*sd[0]+dy*sd[1]; if(!best||Math.abs(proj)>Math.abs(best.proj)){best={axis:a,sign:Math.sign(proj)||1,proj};bestSd=sd;} }
+    if(!best)return null;
+    const sgn=best.sign, t=[0,0,0]; t[best.axis]=sgn;
+    const rVec=cross(n,t), rAxis=absMax(rVec), dirPos=Math.sign(rVec[rAxis])||1, layer=cubies[grab.cubie].pos[rAxis];
+    const sdActive=[bestSd[0]*sgn,bestSd[1]*sgn];               // direzione schermo (unit) del verso +t del dito
+    // px di spostamento a schermo del punto afferrato per radiante di rotazione +dirPos (esatto, prospettiva inclusa) → feel 1:1
+    const eps=0.06, pr=rotPt(grab.worldPos,rAxis,dirPos*eps), sp2=project(VP,pr);
+    let ppr=((sp2[0]-base[0])*sdActive[0]+(sp2[1]-base[1])*sdActive[1])/eps;
+    if(!(ppr>8))ppr=Math.max(8,Math.abs(ppr))||120;            // floor per casi degeneri (asse di taglio quasi di taglio)
+    return {rAxis,layer,dirPos,sdActive,pxPerRad:ppr,angle:0};
+  }
+  // OBIETTIVO 2 — rilascio del drag: oltre 45° OPPURE flick veloce ⇒ completa a ±90° nel verso del moto
+  // con snap proporzionale alla velocità del dito; altrimenti torna a 0 (annulla). Lo stato intero si
+  // committa SOLO al termine dello snap a 90° (in draw()), mantenendo coerenti history e contamosse.
+  function releaseLiveTurn(){
+    const L=live; live=null;
+    const velAct=velX*L.sdActive[0]+velY*L.sdActive[1];         // px/s del dito lungo +t
+    const angVel=L.dirPos*velAct/L.pxPerRad;                    // rad/s attorno a rAxis (segno = verso dell'angolo)
+    const past=Math.abs(L.angle)>HALF/2, fast=Math.abs(velAct)>FLICK_PXS;
+    let target=0;
+    if(past)target=Math.sign(L.angle)*HALF;                    // oltre 45°: completa nel verso accumulato
+    else if(fast)target=Math.sign(angVel||L.angle||1)*HALF;    // flick veloce sotto 45°: completa nel verso del moto
+    if(target===0&&Math.abs(L.angle)<1e-3)return;              // tocco senza rotazione: nessuna animazione
+    const delta=Math.abs(target-L.angle), sp=Math.abs(angVel);
+    const dur=sp>0.0015?clamp(delta/sp*1000,90,340):240;       // dito veloce = snap veloce, lento = morbido
+    anim={ax:L.rAxis,layer:L.layer,from:L.angle,to:target,dir:Math.sign(target),record:target!==0,commit:target!==0,t0:performance.now(),dur};
+    if(target!==0)onUserMove();                                // conta mossa/timer/suono solo se si committa
+  }
+  canvas.addEventListener('pointerdown',(e)=>{ canvas.setPointerCapture(e.pointerId); pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pointers.size===2){if(live)releaseLiveTurn();mode='pinch';const ps=[...pointers.values()];pinchDist=Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y);grab=null;return;}
+    lastX=downX=e.clientX;lastY=downY=e.clientY;tPrev=performance.now();velX=velY=0;
+    const hit=(e.shiftKey)?null:pickAt(e.clientX,e.clientY);
+    if(hit){grab=Object.assign({},hit,grabInfo(hit));mode='turn';live=null;} else {grab=null;mode='orbit';}});
+  canvas.addEventListener('pointermove',(e)=>{ if(!pointers.has(e.pointerId))return; pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(mode==='pinch'&&pointers.size>=2){const ps=[...pointers.values()];const d=Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y);if(pinchDist)radius=clamp(radius*(pinchDist/d),4.2,16);pinchDist=d;return;}
+    const now=performance.now(),dt=now-tPrev; if(dt>0){velX=(e.clientX-lastX)/dt*1000;velY=(e.clientY-lastY)/dt*1000;tPrev=now;}
+    const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;
+    if(mode==='orbit'){theta-=dx*0.008;phi=clamp(phi-dy*0.008,0.15,Math.PI-0.15);}
+    else if(mode==='turn'){
+      if(!live){ if(Math.hypot(e.clientX-downX,e.clientY-downY)>6) live=beginLiveTurn(e.clientX-downX,e.clientY-downY); }
+      if(live){ const fp=(e.clientX-downX)*live.sdActive[0]+(e.clientY-downY)*live.sdActive[1];   // dito proiettato sul verso +t
+        live.angle=clamp(live.dirPos*fp/live.pxPerRad,-TURN_LIM,TURN_LIM); }                       // angolo 1:1 (about rAxis)
+    }});
+  function upPointer(e){ if(mode==='turn'&&live)releaseLiveTurn();
+    pointers.delete(e.pointerId); try{canvas.releasePointerCapture(e.pointerId);}catch(_){}
+    if(pointers.size===0){mode=null;grab=null;} else if(pointers.size===1){mode='orbit';const p=[...pointers.values()][0];lastX=p.x;lastY=p.y;tPrev=performance.now();velX=velY=0;}}
+  canvas.addEventListener('pointerup',upPointer); canvas.addEventListener('pointercancel',upPointer);
+  canvas.addEventListener('wheel',(e)=>{e.preventDefault();radius=clamp(radius*(e.deltaY>0?1.08:0.92),4.2,16);},{passive:false});
+
+  // ===== moves / alg parser =====
+  const TOK={U:[1,1,-1],D:[1,-1,1],R:[0,1,-1],L:[0,-1,1],F:[2,1,-1],B:[2,-1,1]};
+  window.addEventListener('keydown',(e)=>{const k=e.key.toUpperCase();if(!(k in TOK))return;const a=TOK[k];doMove(a[0],a[1],e.shiftKey?-a[2]:a[2],true);});
+  function parseAlg(str){ const out=[]; const parts=str.trim().split(/\s+/);
+    for(const p of parts){ const f=p[0].toUpperCase(); if(!(f in TOK))continue; const base=TOK[f];
+      let dir=base[2]; if(p.includes("'"))dir=-dir; const times=p.includes('2')?2:1;
+      for(let i=0;i<times;i++)out.push([base[0],base[1],dir]); }
+    return out; }
+  function runAlg(str,record=false){ const seq=parseAlg(str); for(const m of seq) enqueue(m[0],m[1],m[2],record); }
+
+  // ===== UI builders =====
+  const moveGrid=$('moveGrid'), MOVES=[['U',1,1,-1],['R',0,1,-1],['F',2,1,-1],['D',1,-1,1],['L',0,-1,1],['B',2,-1,1]];
+  const addMv=(lab,ax,layer,dir,inv)=>{const b=document.createElement('button');b.className='mv';
+    b.innerHTML=lab+(inv?'<span class="inv">’</span>':'');b.onclick=()=>doMove(ax,layer,inv?-dir:dir,true);moveGrid.appendChild(b);};
+  for(const m of MOVES) addMv(m[0],m[1],m[2],m[3],false);
+  for(const m of MOVES) addMv(m[0],m[1],m[2],m[3],true);
+
+  const legend=$('legend');
+  function buildLegend(){ legend.innerHTML='';
+    for(let f=0;f<6;f++){const c=hex2rgb(faceCfg[f].color);const el=document.createElement('div');el.className='lg';
+      const sw=document.createElement('span');sw.className='sw';sw.style.background=`rgb(${c[0]},${c[1]},${c[2]})`;
+      el.appendChild(sw);el.appendChild(document.createTextNode(FACE_NAME[f]));legend.appendChild(el);}}
+
+  const undoBtn=$('undoBtn'),redoBtn=$('redoBtn');
+  const updateButtons=()=>{undoBtn.disabled=(hIdx<=0);redoBtn.disabled=(hIdx>=history.length);};
+
+  // toast
+  const toastEl=$('toast'); let toastT=0;
+  function toast(msg){ toastEl.textContent=msg; toastEl.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>toastEl.classList.remove('show'),1600); }
+
+  function resetCube(announce){ for(const c of cubies){c.pos=c.home.slice();c.orient=ID3.slice();}
+    queue.length=0;anim=null;history=[];hIdx=0;updateButtons();
+    moveCount=0;updateStats();timerRunning=false;startT=0;timeV.textContent='00:00.0';scrambled=false;
+    if(announce)setStatus('Cubo risolto (reset).');checkSolved();}
+  $('scrambleBtn').onclick=()=>{ resetCube(false); let last=-1;
+    for(let i=0;i<25;i++){let ax;do{ax=Math.floor(Math.random()*3);}while(ax===last);last=ax;commitMove(ax,Math.random()<.5?1:-1,Math.random()<.5?1:-1);}
+    history=[];hIdx=0;updateButtons();moveCount=0;updateStats();timerRunning=false;startT=0;timeV.textContent='00:00.0';
+    scrambled=true;setStatus('Mescolato! Risolvilo.');checkSolved();};
+  $('resetBtn').onclick=()=>resetCube(true);
+  undoBtn.onclick=undo; redoBtn.onclick=redo;
+
+  // ===== customize panel =====
+  let selFace=4;
+  const faceBtns=$('faceBtns'),modeSel=$('modeSel'),colorInp=$('colorInp'),textInp=$('textInp'),emojiInp=$('emojiInp'),imgInp=$('imgInp');
+  function buildFaceBtns(){ faceBtns.innerHTML='';
+    for(let f=0;f<6;f++){const b=document.createElement('button');b.className='fb'+(f===selFace?' active':'');
+      const c=hex2rgb(faceCfg[f].color);
+      b.innerHTML=`<span class="dot" style="background:rgb(${c[0]},${c[1]},${c[2]})"></span>${['R','L','U','D','F','B'][f]}`;
+      b.onclick=()=>{selFace=f;syncFaceUI();buildFaceBtns();};faceBtns.appendChild(b);} }
+  function syncFaceUI(){ const cfg=faceCfg[selFace]; modeSel.value=cfg.mode; colorInp.value=cfg.color; textInp.value=cfg.text||''; emojiInp.value=cfg.emoji||'';
+    $('rowColor').style.display=''; $('rowText').style.display=cfg.mode==='text'?'':'none';
+    $('rowEmoji').style.display=cfg.mode==='emoji'?'':'none'; $('rowImage').style.display=cfg.mode==='image'?'':'none'; }
+  modeSel.onchange=()=>{faceCfg[selFace].mode=modeSel.value;syncFaceUI();paintFace(selFace);save();};
+  colorInp.onchange=()=>{let v=colorInp.value.trim();if(!/^#?[0-9a-fA-F]{3,6}$/.test(v)){toast('Colore non valido');return;}if(v[0]!=='#')v='#'+v;faceCfg[selFace].color=v;paintFace(selFace);buildFaceBtns();buildLegend();save();};
+  textInp.oninput=()=>{faceCfg[selFace].text=textInp.value.slice(0,N);paintFace(selFace);save();};
+  emojiInp.oninput=()=>{faceCfg[selFace].emoji=emojiInp.value;paintFace(selFace);save();};
+  imgInp.onchange=()=>{const file=imgInp.files&&imgInp.files[0];if(!file)return;const fr=new FileReader();
+    fr.onload=()=>{const im=new Image();im.onload=()=>{faceImg[selFace]=im;faceCfg[selFace].mode='image';faceCfg[selFace].image=fr.result;syncFaceUI();paintFace(selFace);save();};im.src=fr.result;};fr.readAsDataURL(file);};
+  $('resetFacesBtn').onclick=()=>{for(let f=0;f<6;f++){faceCfg[f]={mode:'color',color:DEFCOL[f],text:'',emoji:'',image:null};delete faceImg[f];}paintAllFaces();buildFaceBtns();buildLegend();syncFaceUI();save();toast('Facce resettate');};
+
+  // ===== persistence + share =====
+  const KEY='cubo.pezzaliapp.cfg';
+  function serialize(){ const f={}; for(let i=0;i<6;i++){const c=faceCfg[i];f[i]={mode:c.mode,color:c.color,text:c.text,emoji:c.emoji,image:c.mode==='image'?c.image:null};}
+    return {v:VERSION,faces:f,opts:{sound,vibrate,colorblind}}; }
+  function save(){ try{localStorage.setItem(KEY,JSON.stringify(serialize()));}catch(_){}}
+  function applyConfig(obj){ if(!obj||!obj.faces)return;
+    for(let i=0;i<6;i++){const s=obj.faces[i];if(!s)continue;faceCfg[i].mode=s.mode||'color';faceCfg[i].color=s.color||DEFCOL[i];faceCfg[i].text=s.text||'';faceCfg[i].emoji=s.emoji||'';faceCfg[i].image=s.image||null;
+      if(s.mode==='image'&&s.image){const im=new Image();im.onload=()=>{faceImg[i]=im;paintFace(i);};im.src=s.image;}}
+    if(obj.opts){sound=!!obj.opts.sound;vibrate=!!obj.opts.vibrate;colorblind=!!obj.opts.colorblind;}
+  }
+  function loadInitial(){
+    let loaded=false;
+    try{const u=new URLSearchParams(location.search).get('cfg');
+      if(u){applyConfig(JSON.parse(decodeURIComponent(escape(atob(u.replace(/-/g,'+').replace(/_/g,'/')))))) ;loaded=true;}}catch(_){}
+    if(!loaded){try{const s=localStorage.getItem(KEY);if(s)applyConfig(JSON.parse(s));}catch(_){}}
+  }
+  function b64(str){ return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+  $('copyLinkBtn').onclick=()=>{ const url=location.origin+location.pathname+'?cfg='+b64(JSON.stringify(serialize()));
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(url).then(()=>toast('Link copiato')).catch(()=>toast('Copia non riuscita'));
+    else toast('Clipboard non disponibile'); };
+  $('exportCfgBtn').onclick=()=>{ const blob=new Blob([JSON.stringify(serialize(),null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cubo-pezzaliapp-config.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast('Config esportata');};
+  $('importCfgBtn').onclick=()=>$('importFile').click();
+  $('importFile').onchange=()=>{const file=$('importFile').files&&$('importFile').files[0];if(!file)return;const fr=new FileReader();
+    fr.onload=()=>{try{applyConfig(JSON.parse(fr.result));paintAllFaces();buildFaceBtns();buildLegend();syncFaceUI();syncOptUI();save();toast('Config importata');}catch(_){toast('JSON non valido');}};fr.readAsText(file);};
+
+  // ===== patterns + memo =====
+  const PATTERNS=[
+    {name:'Scacchiera', alg:'U2 D2 F2 B2 L2 R2'},
+    {name:'Superflip', alg:"U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2"},
+    {name:'Cube-in-cube', alg:"F L F U' R U F2 L2 U' L' B D' B' L2 U"},
+    {name:'6 punti', alg:"U D R L F B U D R L F B"}
+  ];
+  const patternBtns=$('patternBtns');
+  for(const p of PATTERNS){ const b=document.createElement('button');b.className='btn sm';b.textContent=p.name;
+    b.onclick=()=>{resetCube(false);runAlg(p.alg,false);setStatus('Pattern: '+p.name);scrambled=false;};patternBtns.appendChild(b);}
+
+  $('memoBtn').onclick=()=>{ resetCube(false); setStatus('Memorizza le facce…'); let s=5; solvedPill.textContent='Memo '+s+'s'; solvedPill.classList.remove('win');
+    const iv=setInterval(()=>{s--; if(s>0){solvedPill.textContent='Memo '+s+'s';} else { clearInterval(iv);
+      let last=-1; for(let i=0;i<20;i++){let ax;do{ax=Math.floor(Math.random()*3);}while(ax===last);last=ax;commitMove(ax,Math.random()<.5?1:-1,Math.random()<.5?1:-1);}
+      history=[];hIdx=0;updateButtons();moveCount=0;updateStats();timerRunning=false;startT=0;timeV.textContent='00:00.0';
+      scrambled=true;setStatus('Ricostruisci la configurazione!');checkSolved(); } },1000); };
+
+  // ===== PNG export with watermark =====
+  $('pngBtn').onclick=()=>{ try{
+    const out=document.createElement('canvas'); out.width=canvas.width; out.height=canvas.height;
+    const o=out.getContext('2d'); o.fillStyle='#070a10'; o.fillRect(0,0,out.width,out.height);
+    o.drawImage(canvas,0,0);
+    const fs=Math.max(14,Math.round(out.width*0.018));
+    o.font='800 '+fs+'px ui-sans-serif,system-ui,Arial'; o.textAlign='right'; o.textBaseline='bottom';
+    o.fillStyle='rgba(255,255,255,.55)'; o.fillText('Il Cubo di PezzaliApp · pezzaliapp.com', out.width-14, out.height-12);
+    const a=document.createElement('a'); a.href=out.toDataURL('image/png'); a.download='cubo-pezzaliapp.png'; a.click();
+    toast('PNG salvato');
+  }catch(_){toast('Export non riuscito');} };
+
+  // ===== option switches =====
+  const swSound=$('swSound'),swVibe=$('swVibe'),swCB=$('swCB');
+  const setSwitch=(el,on)=>el.classList.toggle('on',!!on);
+  function syncOptUI(){ setSwitch(swSound,sound);setSwitch(swVibe,vibrate);setSwitch(swCB,colorblind); }
+  swSound.onclick=()=>{sound=!sound;setSwitch(swSound,sound);if(sound)beep();save();};
+  swVibe.onclick=()=>{vibrate=!vibrate;setSwitch(swVibe,vibrate);if(vibrate)vibe();save();};
+  swCB.onclick=()=>{colorblind=!colorblind;setSwitch(swCB,colorblind);paintAllFaces();save();};
+
+  // ===== init =====
+  loadInitial();
+  paintAllFaces(); buildFaceBtns(); syncFaceUI(); buildLegend(); syncOptUI();
+  $('verBadge').textContent='v'+VERSION.split('.').slice(0,2).join('.')+' · WebGL2';
+  gl.enable(gl.DEPTH_TEST); updateButtons(); updateStats(); checkSolved();
+  requestAnimationFrame(draw);
+  // expose minimal API for tinkering
+  window.CuboPezzaliApp={ runAlg, resetCube, faceCfg, version:VERSION };
+})();
+</script>
+</body>
+</html>

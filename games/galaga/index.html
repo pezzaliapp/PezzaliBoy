@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<script src="../../gbx-bridge.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#0b1424">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icon-192.png">
+  <title>GalagaPWA — pezzaliAPP (Tributo didattico)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>🛸 Galaga — PWA (Tributo 1981)</h1>
+    <div class="top-actions">
+      <button id="btnInstall" hidden>Aggiungi alla Home</button>
+      <button id="btnMute" aria-pressed="false" title="Mute/Unmute">🔊</button>
+    </div>
+  </header>
+
+  <main id="gameWrap">
+    <canvas id="game" width="224" height="288" aria-label="Area di gioco"></canvas>
+    <div id="hud">
+      <div>🧮 <span id="score">0</span></div>
+      <div>❤️ <span id="lives">3</span></div>
+      <div>🌊 Wave <span id="wave">1</span></div>
+      <div id="status"></div>
+    </div>
+
+    <section id="menu" class="panel show">
+      <h2>Galaga — Tributo PWA</h2>
+      <p>Ricreazione didattica ispirata al classico Namco (1981). Funziona su smartphone e laptop.</p>
+      <ul class="keys">
+        <li>🎮 <strong>Desktop</strong>: ← → per muovere, <kbd>Spazio</kbd> spara, <kbd>P</kbd> pausa.</li>
+        <li>📱 <strong>Mobile</strong>: tasti virtuali o trascina il dito.</li>
+      </ul>
+      <button id="btnStart" class="primary">Gioca</button>
+    </section>
+
+    <div id="touch" class="touch">
+      <button id="left" aria-label="Sinistra">◀</button>
+      <button id="fire" aria-label="Fuoco">●</button>
+      <button id="right" aria-label="Destra">▶</button>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>© 2025 pezzaliAPP — MIT. Marchi e nomi appartengono ai rispettivi proprietari. Progetto didattico, non commerciale.</p>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    // Simple PWA install prompt
+    let deferredPrompt;
+    const btnInstall = document.getElementById('btnInstall');
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      btnInstall.hidden = false;
+    });
+    btnInstall?.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      btnInstall.hidden = true;
+    });
+
+    // Register SW
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js');
+      });
+    }
+  </script>
+</body>
+</html>

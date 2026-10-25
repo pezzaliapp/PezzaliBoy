@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="SUDOKU">
+  <title>SUDOKU</title>
+  <rect width="512" height="512" rx="96" ry="96" fill="#0b0d10"/>
+  <g transform="translate(88 88)">
+    <rect x="14" y="14" width="308" height="308" rx="26" ry="26" fill="none" stroke="#f2f5f9" stroke-width="20"/>
+    <rect x="122" y="122" width="92" height="92" rx="12" ry="12" fill="#7db3ff"/>
+    <g stroke="#f2f5f9" stroke-width="12" stroke-linecap="round">
+      <line x1="120" y1="30" x2="120" y2="306"/>
+      <line x1="216" y1="30" x2="216" y2="306"/>
+      <line x1="30" y1="120" x2="306" y2="120"/>
+      <line x1="30" y1="216" x2="306" y2="216"/>
+    </g>
+  </g>
+</svg>

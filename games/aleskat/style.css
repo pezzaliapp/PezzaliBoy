@@ -1,0 +1,297 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+
+:root {
+  --deep:   #020b18;
+  --abyss:  #000d1a;
+  --cyan:   #00f5ff;
+  --cyan2:  #00c8d4;
+  --lime:   #39ff14;
+  --magenta:#ff2d78;
+  --amber:  #ffb700;
+  --violet: #9b5de5;
+  --font-hud: 'Orbitron', monospace;
+  --font-body:'Rajdhani', sans-serif;
+}
+
+html, body {
+  width:100%;
+  min-height:100%;
+  margin:0;
+  overflow:hidden;
+  background: var(--abyss);
+  font-family: var(--font-body);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html {
+  height:100%;
+}
+
+body {
+  height:100vh;
+  height:100dvh;
+}
+
+/* ── LAYOUT PRINCIPALE ─────────────────────────────────────────────
+   #app  → schermo intero, centra il wrapper
+   #gameWrapper → esattamente W×H del canvas; dimensionato via JS
+   Tutti gli overlay sono position:absolute rispetto a #gameWrapper
+   → rimangono SEMPRE dentro il rettangolo di gioco su qualsiasi schermo
+──────────────────────────────────────────────────────────────────── */
+#app {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--abyss);
+  overflow: hidden;
+}
+
+#gameWrapper {
+  position: relative;
+  flex-shrink: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+#gameCanvas {
+  display: block;
+  /* canvas occupa esattamente il wrapper */
+  width: 100%;
+  height: 100%;
+}
+
+/* ── SPLASH ────────────────────────────────────────────────────────*/
+#splash {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+.splash-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(0,245,255,.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 80%, rgba(155,93,229,.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 50%, rgba(3,31,61,.9) 0%, var(--abyss) 100%);
+  animation: bgP 4s ease-in-out infinite alternate;
+}
+@keyframes bgP { from{opacity:.8} to{opacity:1} }
+
+.splash-content {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center;
+  gap: clamp(14px,3.5vh,36px);
+  padding: 32px 20px;
+  width: 100%; max-width: 380px;
+}
+.logo-wrap { position:relative; text-align:center; }
+.logo-glow {
+  position:absolute; top:50%; left:50%;
+  transform: translate(-50%,-50%);
+  width:260px; height:100px;
+  background: radial-gradient(ellipse, rgba(0,245,255,.3) 0%, transparent 70%);
+  animation: lglow 2s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes lglow {
+  from { opacity:.5; transform:translate(-50%,-50%) scale(.9); }
+  to   { opacity:1;  transform:translate(-50%,-50%) scale(1.1); }
+}
+.logo-text {
+  font-family: var(--font-hud);
+  font-size: clamp(42px, 12vw, 80px);
+  font-weight: 900; letter-spacing: .15em;
+  color: transparent;
+  background: linear-gradient(135deg, var(--cyan) 0%, var(--cyan2) 40%, var(--violet) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 0 18px rgba(0,245,255,.7));
+  animation: lFloat 3s ease-in-out infinite;
+}
+@keyframes lFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+.logo-sub {
+  font-family: var(--font-hud);
+  font-size: clamp(9px,2.5vw,13px);
+  letter-spacing:.4em; color:var(--cyan2); opacity:.7; margin-top:3px;
+}
+.menu-btns { display:flex; flex-direction:column; align-items:center; gap:12px; width:100%; }
+.btn-play {
+  font-family: var(--font-hud);
+  font-size: clamp(13px,3.5vw,18px); font-weight:700;
+  letter-spacing:.25em; color:var(--abyss);
+  background: linear-gradient(135deg, var(--cyan), var(--lime));
+  border:none; border-radius:4px; padding:14px 40px;
+  cursor:pointer; width:80%; max-width:260px;
+  transition: transform .15s, box-shadow .15s;
+  box-shadow: 0 0 28px rgba(0,245,255,.4), 0 0 55px rgba(57,255,20,.2);
+}
+.btn-play:active { transform:scale(.95); }
+.high-score-display { display:flex; flex-direction:column; align-items:center; gap:2px; }
+.hs-label { font-family:var(--font-hud); font-size:9px; letter-spacing:.3em; color:var(--cyan2); opacity:.6; }
+.hs-val   { font-family:var(--font-hud); font-size:26px; font-weight:700; color:var(--amber);
+            filter:drop-shadow(0 0 8px rgba(255,183,0,.6)); }
+.splash-tips {
+  display:flex; flex-direction:column; align-items:center; gap:5px; width:100%;
+}
+.splash-tips span {
+  font-family:var(--font-body); font-size:12px; letter-spacing:.06em;
+  color:rgba(0,245,255,.5); padding:3px 10px;
+  border:1px solid rgba(0,245,255,.12); border-radius:20px;
+}
+.splash-footer {
+  font-family:var(--font-body); font-size:12px;
+  letter-spacing:.2em; color:rgba(0,245,255,.3);
+}
+
+/* ── HUD ───────────────────────────────────────────────────────────*/
+#hud {
+  position: absolute;
+  top:0; left:0; right:0;     /* si estende fino ai bordi del WRAPPER, non dello schermo */
+  z-index: 50;
+  padding: 8px 12px 0;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.hud-top { display:flex; justify-content:space-between; align-items:flex-start; }
+.hud-item { display:flex; flex-direction:column; align-items:flex-start; }
+.hud-right  { align-items:flex-end; }
+.hud-center { align-items:center; flex:1; padding:0 6px; }
+.hud-label {
+  font-family:var(--font-hud); font-size:7px;
+  letter-spacing:.3em; color:rgba(0,245,255,.5);
+}
+.hud-item span:last-child:not(.hud-label):not(.hud-level):not(.hud-lives) {
+  font-family:var(--font-hud);
+  font-size: clamp(14px,4vw,20px);
+  font-weight:700; color:var(--cyan);
+  filter:drop-shadow(0 0 5px rgba(0,245,255,.6));
+}
+.hud-level {
+  font-family:var(--font-hud); font-size:clamp(10px,2.8vw,14px); font-weight:700;
+  color:var(--amber); filter:drop-shadow(0 0 7px rgba(255,183,0,.7)); letter-spacing:.2em;
+}
+.hud-lives { font-size:clamp(12px,3.2vw,17px); line-height:1.4; }
+.hud-energy-bar {
+  position:relative; height:4px;
+  background:rgba(255,255,255,.1); border-radius:2px; overflow:hidden; margin:0 2px;
+}
+.energy-fill {
+  height:100%; width:100%;
+  background: linear-gradient(90deg, var(--lime), var(--cyan));
+  border-radius:2px; transition:width .3s, background .5s;
+  box-shadow:0 0 7px rgba(57,255,20,.6);
+}
+.energy-fill.low {
+  background: linear-gradient(90deg, var(--magenta), var(--amber));
+  box-shadow:0 0 7px rgba(255,45,120,.6);
+  animation: ePulse .5s ease-in-out infinite alternate;
+}
+@keyframes ePulse { from{opacity:.7} to{opacity:1} }
+.energy-label {
+  position:absolute; right:6px; top:50%; transform:translateY(-50%);
+  font-family:var(--font-hud); font-size:6px; letter-spacing:.2em; color:rgba(255,255,255,.4);
+}
+
+/* ── GAME OVER ─────────────────────────────────────────────────────*/
+#gameOver {
+  position: absolute; inset: 0;   /* dentro il wrapper */
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+}
+.go-overlay {
+  position:absolute; inset:0;
+  background:rgba(0,0,0,.75); backdrop-filter:blur(8px);
+}
+.go-content {
+  position:relative; z-index:1;
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  padding:30px 24px;
+  background:rgba(3,31,61,.92);
+  border:1px solid rgba(0,245,255,.2); border-radius:8px;
+  box-shadow:0 0 50px rgba(255,45,120,.3), inset 0 0 30px rgba(0,0,0,.5);
+  width:85%; max-width:320px;
+}
+.go-skull { font-size:44px; animation:sShake .5s ease-in-out .1s; }
+@keyframes sShake {
+  0%,100%{transform:rotate(0)} 20%{transform:rotate(-10deg) scale(1.2)}
+  40%{transform:rotate(10deg) scale(1.3)} 60%{transform:rotate(-8deg)} 80%{transform:rotate(8deg)}
+}
+.go-title {
+  font-family:var(--font-hud); font-size:clamp(24px,7vw,34px); font-weight:900;
+  letter-spacing:.2em; color:var(--magenta);
+  filter:drop-shadow(0 0 14px rgba(255,45,120,.8));
+}
+.go-stats { display:grid; grid-template-columns:1fr 1fr; gap:9px 16px; width:100%; }
+.go-stat  { display:flex; flex-direction:column; align-items:center; gap:1px; }
+.go-stat-full { grid-column:1/-1; }
+.go-stat span   { font-family:var(--font-hud); font-size:8px; letter-spacing:.2em; color:rgba(0,245,255,.5); }
+.go-stat strong { font-family:var(--font-hud); font-size:18px; color:var(--amber);
+                  filter:drop-shadow(0 0 5px rgba(255,183,0,.5)); }
+.btn-restart { width:85%; }
+.btn-menu {
+  font-family:var(--font-hud); font-size:12px; letter-spacing:.25em;
+  color:rgba(0,245,255,.5); background:transparent;
+  border:1px solid rgba(0,245,255,.2); border-radius:4px; padding:9px 28px;
+  cursor:pointer; transition:color .2s, border-color .2s;
+}
+.btn-menu:hover { color:var(--cyan); border-color:rgba(0,245,255,.6); }
+
+/* ── JOYSTICK ──────────────────────────────────────────────────────*/
+#joystickZone {
+  position: absolute;
+  inset: 0;                /* copre tutto il wrapper — mouse funziona ovunque */
+  z-index: 60; touch-action: none;
+}
+/* Su touch, visivamente il base appare comunque in basso */
+#joystickBase {
+  position: absolute;
+  bottom: clamp(30px,6vh,70px); left: 50%;
+  transform: translateX(-50%);
+  width:110px; height:110px; border-radius:50%;
+  background:rgba(0,245,255,.06);
+  border:2px solid rgba(0,245,255,.15);
+  display:flex; align-items:center; justify-content:center;
+  backdrop-filter:blur(2px);
+}
+#joystickKnob {
+  width:46px; height:46px; border-radius:50%;
+  background: radial-gradient(circle at 35% 35%, rgba(0,245,255,.6), rgba(0,200,212,.3));
+  border:2px solid rgba(0,245,255,.5);
+  box-shadow:0 0 18px rgba(0,245,255,.4);
+  transition:transform .05s; pointer-events:none;
+}
+
+
+@media (pointer: coarse) {
+  #gameWrapper {
+    cursor: default;
+  }
+
+  #joystickBase {
+    width: min(110px, 24vw);
+    height: min(110px, 24vw);
+    bottom: max(24px, env(safe-area-inset-bottom));
+  }
+
+  #joystickKnob {
+    width: min(46px, 10vw);
+    height: min(46px, 10vw);
+  }
+}
+
+@media (pointer: fine) {
+  #joystickBase {
+    opacity: .32;
+  }
+}
+
+.hidden { display:none !important; }

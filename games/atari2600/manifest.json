@@ -1,0 +1,16 @@
+{
+  "name": "Retro Arcade — Emulatore stile classici",
+  "short_name": "Retro Arcade",
+  "description": "Raccolta gratuita di cinque ricreazioni originali in stile arcade anni '80. Nessuna ROM né contenuto di terze parti: solo omaggi scritti da zero.",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,33 @@
+/* GalagaPWA — stile minimale */
+:root{
+  --bg:#0b1424;
+  --ink:#e8f0ff;
+  --panel:#101a2f;
+  --muted:#a9b4cc;
+  --accent:#4fd1ff;
+  --btn:#16223b;
+  --btn2:#1b2a4d;
+  --shadow:0 6px 20px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:radial-gradient(1200px 600px at 50% 0%, #0f1b33 0%, var(--bg) 60%, #070c16 100%);color:var(--ink);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:.6rem 1rem;background:linear-gradient(180deg,#0f1a2d,#0d1627);position:sticky;top:0;z-index:10;border-bottom:1px solid #0d1b32}
+.topbar h1{font-size:1rem;margin:0;font-weight:700;letter-spacing:.3px}
+.top-actions button{margin-left:.5rem;background:var(--btn);border:1px solid #23345d;color:var(--ink);padding:.4rem .6rem;border-radius:.5rem}
+#gameWrap{max-width:900px;margin:1rem auto;padding:0 1rem;display:grid;grid-template-columns:1fr;gap:1rem}
+#game{width:100%;height:auto;aspect-ratio:224/288;background:#000;display:block;border:2px solid #1e2b4a;box-shadow:var(--shadow)}
+#hud{display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between;background:var(--panel);padding:.5rem .75rem;border:1px solid #16233f;border-radius:.75rem}
+#hud div{color:var(--muted)}
+#hud #status{color:var(--accent)}
+.panel{background:rgba(16,26,47,.9);border:1px solid #1c2a4b;padding:1rem;border-radius:.75rem;box-shadow:var(--shadow);display:none}
+.panel.show{display:block}
+.panel .primary{background:linear-gradient(180deg,#21406d,#1a2f54);border:1px solid #2a4f8b;color:#eaf4ff;padding:.6rem 1rem;border-radius:.6rem;font-weight:700}
+.keys{color:var(--muted);}
+.keys kbd{background:#1a2748;border:1px solid #2c4278;border-bottom-width:3px;border-radius:.3rem;padding:.05rem .35rem}
+.touch{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;padding: .6rem;z-index:9}
+.touch button{background:var(--btn2);color:#cfe3ff;border:1px solid #2b3c65;border-radius:1rem;padding:1rem;font-size:1.4rem}
+.touch #fire{font-size:1.8rem}
+@media (min-width:900px){
+  .touch{display:none}
+}
+.foot{color:#8aa0c9;text-align:center;padding:1rem 1rem 2rem}

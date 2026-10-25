@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>ILCUBO — Pulizia cache & reset PWA</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      max-width: 720px;
+      margin: auto;
+      padding: 24px 20px 48px;
+      line-height: 1.6;
+      background: #fafafa;
+      color: #222;
+    }
+    h1 {
+      font-size: 1.7em;
+      margin-bottom: .3em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    p { text-align: left; }
+    .card {
+      background: #fff;
+      border: 1px solid #e6e6e6;
+      border-radius: 12px;
+      padding: 18px 18px 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+      margin: 18px 0;
+    }
+    #log {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .9em;
+      background: #0f1115;
+      color: #d6e2ff;
+      border-radius: 10px;
+      padding: 14px 16px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 96px;
+      margin: 12px 0;
+    }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0 4px; }
+    button, .btn {
+      -webkit-appearance: none; appearance: none;
+      border: 0; border-radius: 10px;
+      padding: 12px 18px; font-size: 1em; font-weight: 700;
+      cursor: pointer; text-decoration: none; display: inline-block;
+    }
+    .primary { background: #0b5fff; color: #fff; }
+    .ghost   { background: #eef1f6; color: #111; }
+    .primary:active, .ghost:active { transform: translateY(1px); }
+    .note {
+      background: #fff8e5;
+      border-left: 4px solid #ffb100;
+      padding: 12px 14px;
+      margin: 1.2em 0;
+      border-radius: 6px;
+    }
+    .footer {
+      margin-top: 2em;
+      padding-top: 1em;
+      border-top: 1px solid #ddd;
+      font-size: .9em;
+      color: #555;
+      text-align: center;
+    }
+    a { color: #0b5fff; }
+  </style>
+</head>
+<body>
+
+<h1>🧹 ILCUBO — Reset cache &amp; PWA</h1>
+<p>
+  Questa pagina <b>ripulisce automaticamente</b> il service worker e tutte le cache
+  offline di <b>ILCUBO</b>. Serve quando, dopo un aggiornamento, l’app resta bloccata
+  su una <b>pagina bianca</b> (tipico su iPhone/Safari): è quasi sempre una vecchia
+  versione “congelata” in cache.
+</p>
+
+<div class="card">
+  <p><b>Cosa succede premendo il pulsante:</b></p>
+  <ul>
+    <li>Disinstallo <b>tutti i service worker</b> registrati per questo sito.</li>
+    <li>Cancello <b>tutte le cache</b> offline (ILCUBO e la vecchia KubeApp).</li>
+    <li>Ti riporto su <a href="/ILCUBO/">ILCUBO</a> con la versione aggiornata.</li>
+  </ul>
+
+  <div class="row">
+    <button id="clearBtn" class="primary">🧹 Pulisci ora e riapri ILCUBO</button>
+    <a class="btn ghost" href="/ILCUBO/">↩︎ Vai a ILCUBO senza pulire</a>
+  </div>
+
+  <div id="log" aria-live="polite">Pronto. Premi “Pulisci ora”.</div>
+</div>
+
+<div class="note">
+  ℹ️ Se dopo la pulizia vedi ancora la pagina bianca, chiudi <b>completamente</b> Safari
+  (scorri via la scheda dal selettore app) e riapri <a href="/ILCUBO/">ILCUBO</a>.
+  Se avevi aggiunto l’app alla schermata Home, rimuovi l’icona e reinstallala.
+</div>
+
+<div class="footer">
+  <p>© 2025 Alessandro Pezzali — <a href="/ILCUBO/">ILCUBO PWA</a> — una PWA di pezzaliAPP.com</p>
+</div>
+
+<script>
+(function () {
+  const logEl = document.getElementById('log');
+  const btn   = document.getElementById('clearBtn');
+  const TARGET = '/ILCUBO/';
+
+  function log(msg) {
+    logEl.textContent += '\n' + msg;
+  }
+
+  async function clearAll() {
+    btn.disabled = true;
+    logEl.textContent = '⏳ Pulizia in corso…';
+
+    // 1) Disinstalla tutti i service worker
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        if (!regs.length) {
+          log('• Nessun service worker registrato.');
+        } else {
+          for (const reg of regs) {
+            const ok = await reg.unregister();
+            log('• Service worker disinstallato: ' + (ok ? 'OK' : 'già rimosso'));
+          }
+        }
+      } else {
+        log('• Service worker non supportato dal browser.');
+      }
+    } catch (e) {
+      log('• Errore disinstallazione SW: ' + e.message);
+    }
+
+    // 2) Cancella tutte le cache
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        if (!keys.length) {
+          log('• Nessuna cache da cancellare.');
+        } else {
+          for (const k of keys) {
+            await caches.delete(k);
+            log('• Cache cancellata: ' + k);
+          }
+        }
+      } else {
+        log('• Cache API non supportata dal browser.');
+      }
+    } catch (e) {
+      log('• Errore cancellazione cache: ' + e.message);
+    }
+
+    log('✅ Fatto! Riapro ILCUBO tra 2 secondi…');
+    // Bust dell'eventuale cache HTTP con un parametro anti-cache.
+    setTimeout(function () {
+      location.href = TARGET + '?fresh=' + (new Date().getTime());
+    }, 2000);
+  }
+
+  btn.addEventListener('click', clearAll);
+})();
+</script>
+
+</body>
+</html>

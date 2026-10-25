@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="it" data-theme="auto">
+<head>
+<script src="../../gbx-bridge.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SUDOKU — keep it simple.</title>
+<meta name="description" content="Sudoku gratuito e senza pubblicità. Funziona offline, non richiede account e non raccoglie dati.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c0e11" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SUDOKU">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <h1 class="brand__title">SUDOKU</h1>
+      <p class="brand__tagline">keep it simple.</p>
+    </div>
+    <div class="topbar__actions">
+      <button type="button" id="themeBtn" class="icon-btn" aria-label="Cambia tema" title="Tema">
+        <span id="themeIcon" aria-hidden="true">◐</span>
+      </button>
+      <button type="button" id="infoBtn" class="icon-btn" aria-label="Informazioni e privacy" title="Informazioni">
+        <span aria-hidden="true">i</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+
+    <section class="board-area" aria-label="Partita">
+      <div class="status">
+        <div class="status__cell">
+          <span class="status__label">Livello</span>
+          <strong class="status__value" id="statLevel">Medio</strong>
+        </div>
+        <div class="status__cell">
+          <span class="status__label">Tempo</span>
+          <strong class="status__value" id="statTime">00:00</strong>
+        </div>
+        <div class="status__cell">
+          <span class="status__label">Errori</span>
+          <strong class="status__value" id="statErrors">0</strong>
+        </div>
+        <div class="status__cell">
+          <span class="status__label">Aiuti</span>
+          <strong class="status__value" id="statHints">0</strong>
+        </div>
+      </div>
+
+      <div class="board-wrap">
+        <div id="board" class="board" role="grid" aria-label="Griglia Sudoku 9 per 9"></div>
+        <div id="busy" class="busy" hidden>
+          <span class="busy__spinner" aria-hidden="true"></span>
+          <span>Generazione…</span>
+        </div>
+        <p class="live" id="live" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Comandi">
+
+      <div class="row row--start">
+        <label class="field">
+          <span class="field__label" id="levelLabel">Difficoltà</span>
+          <select id="levelSelect" class="select" aria-labelledby="levelLabel">
+            <option value="facile">Facile</option>
+            <option value="medio">Medio</option>
+            <option value="difficile">Difficile</option>
+            <option value="esperto">Esperto</option>
+          </select>
+        </label>
+        <button type="button" id="newGameBtn" class="btn btn--primary">Nuova partita</button>
+      </div>
+
+      <div class="tools" role="group" aria-label="Strumenti">
+        <button type="button" class="btn tool" id="notesBtn" aria-pressed="false">
+          <span class="tool__icon" aria-hidden="true">✎</span>
+          <span class="tool__text">Note</span>
+        </button>
+        <button type="button" class="btn tool" id="eraseBtn">
+          <span class="tool__icon" aria-hidden="true">⌫</span>
+          <span class="tool__text">Cancella</span>
+        </button>
+        <button type="button" class="btn tool" id="undoBtn">
+          <span class="tool__icon" aria-hidden="true">↶</span>
+          <span class="tool__text">Annulla</span>
+        </button>
+        <button type="button" class="btn tool" id="hintBtn">
+          <span class="tool__icon" aria-hidden="true">☀</span>
+          <span class="tool__text">Aiuto</span>
+        </button>
+        <button type="button" class="btn tool" id="checkBtn">
+          <span class="tool__icon" aria-hidden="true">✓</span>
+          <span class="tool__text">Controlla</span>
+        </button>
+      </div>
+
+      <div id="pad" class="pad" role="group" aria-label="Tastierino numerico"></div>
+
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p class="footer__line">© 2026 Alessandro Pezzali</p>
+    <p class="footer__line footer__line--muted">
+      <span id="versionTag">v3.0.0</span> ·
+      <button type="button" class="linkish" id="infoLink">Informazioni e privacy</button>
+    </p>
+  </footer>
+
+</div>
+
+<dialog id="infoDialog" class="dialog" aria-labelledby="infoTitle">
+  <form method="dialog" class="dialog__inner">
+    <h2 class="dialog__title" id="infoTitle" tabindex="-1" autofocus>Informazioni</h2>
+
+    <h3 class="dialog__subtitle">Privacy</h3>
+    <p>Questa applicazione non utilizza account, cookie di profilazione, analytics, pubblicità o servizi di terze parti.
+       Il gioco viene eseguito localmente sul dispositivo. I dati della partita restano esclusivamente sul dispositivo dell'utente.</p>
+
+    <h3 class="dialog__subtitle">Disclaimer</h3>
+    <p>Applicazione gratuita a scopo ricreativo. Le funzionalità sono fornite così come sono, senza garanzie implicite o esplicite.</p>
+    <p>Sudoku è il nome comunemente utilizzato per il rompicapo numerico basato su una griglia 9×9.
+       Questa applicazione è un progetto indipendente.</p>
+
+    <h3 class="dialog__subtitle">Come si gioca</h3>
+    <p>Ogni riga, ogni colonna e ogni blocco 3×3 devono contenere le cifre da 1 a 9 senza ripetizioni.
+       Le celle iniziali non sono modificabili.</p>
+    <ul class="dialog__list">
+      <li><strong>Tastiera</strong>: cifre 1-9 per inserire, frecce per spostarsi, Backspace o Canc per cancellare.</li>
+      <li><strong>N</strong> attiva le note, <strong>H</strong> chiede un aiuto, <strong>C</strong> controlla la griglia, <strong>Z</strong> annulla.</li>
+      <li>Nel tastierino le cifre già inserite nove volte appaiono attenuate.</li>
+      <li>La partita viene salvata automaticamente e riprende da sola alla riapertura.</li>
+    </ul>
+
+    <h3 class="dialog__subtitle">Applicazione</h3>
+    <p class="dialog__meta">Versione <span id="dialogVersion">3.0.0</span> · <span id="appMetaNote">funziona offline · si aggiorna automaticamente.</span></p>
+    <p class="dialog__meta">© 2026 Alessandro Pezzali</p>
+
+    <menu class="dialog__actions">
+      <button type="button" class="btn btn--ghost" id="resetDataBtn">Cancella dati locali</button>
+      <button class="btn btn--primary" value="close">Chiudi</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="confirmDialog" class="dialog dialog--compact" aria-labelledby="confirmTitle">
+  <form method="dialog" class="dialog__inner">
+    <h2 class="dialog__title" id="confirmTitle" tabindex="-1" autofocus>Nuova partita?</h2>
+    <p>La partita in corso non è terminata: i progressi andranno persi.</p>
+    <menu class="dialog__actions">
+      <button class="btn btn--ghost" value="cancel">Annulla</button>
+      <button class="btn btn--primary" value="confirm">Nuova partita</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="winDialog" class="dialog" aria-labelledby="winTitle">
+  <form method="dialog" class="dialog__inner dialog__inner--center">
+    <p class="win__mark" aria-hidden="true">✓</p>
+    <h2 class="dialog__title" id="winTitle">Sudoku completato</h2>
+    <p class="win__lead" id="winLead">Complimenti.</p>
+    <dl class="win__stats">
+      <div><dt>Livello</dt><dd id="winLevel">—</dd></div>
+      <div><dt>Tempo</dt><dd id="winTime">—</dd></div>
+      <div><dt>Errori</dt><dd id="winErrors">—</dd></div>
+      <div><dt>Aiuti</dt><dd id="winHints">—</dd></div>
+    </dl>
+    <menu class="dialog__actions dialog__actions--center">
+      <button class="btn btn--ghost" value="close">Chiudi</button>
+      <button type="button" class="btn btn--primary" id="winNewBtn">Nuova partita</button>
+    </menu>
+  </form>
+</dialog>
+
+<script type="module" src="./assets/js/app.js"></script>
+<noscript>
+  <p style="padding:1rem;text-align:center">Per giocare è necessario abilitare JavaScript.</p>
+</noscript>
+</body>
+</html>

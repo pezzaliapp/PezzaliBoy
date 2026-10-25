@@ -1,0 +1,849 @@
+/*
+ * SUDOKU — foglio di stile
+ * Palette a token, tema chiaro e scuro, layout responsivo senza dipendenze.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Token — tema chiaro (predefinito)                                   */
+/* ------------------------------------------------------------------ */
+:root {
+  color-scheme: light;
+
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-2: #eef1f6;
+  --text: #12151a;
+  --muted: #59616e;
+  --border: #d7dce4;
+
+  --line: #c2c9d4;
+  --line-strong: #303844;
+
+  --cell-bg: #ffffff;
+  --cell-given: #12151a;
+  --cell-user: #14509b;
+  --cell-hint: #0a6b45;
+  --cell-note: #6b7482;
+
+  --sel-bg: #cfe0fb;
+  --peer-bg: #e9eff8;
+  --same-bg: #b9d3f8;
+
+  --error-bg: #fbdcdc;
+  --error-fg: #a71d22;
+
+  --accent: #14509b;
+  --accent-contrast: #ffffff;
+  --accent-soft: #dfe9fa;
+
+  --focus: #14509b;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 8px 24px rgba(16, 24, 40, .06);
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --gap: clamp(10px, 2.2vw, 18px);
+
+  /* Larghezza del pannello comandi nei layout a due colonne */
+  --panel-w: clamp(190px, 24vw, 300px);
+
+  /* Lato della griglia: dipende sempre da larghezza E altezza disponibili.
+     Modalità predefinita (colonna singola, telefoni). */
+  --board-size: max(220px, min(calc(100vw - var(--gap) * 2), calc(100svh - 430px), 560px));
+}
+
+/* Tema scuro automatico (solo se l'utente non ha forzato il chiaro) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --bg: #0b0d10;
+    --surface: #14181e;
+    --surface-2: #1b2028;
+    --text: #f2f5f9;
+    --muted: #a3acba;
+    --border: #2b323c;
+
+    --line: #333b47;
+    --line-strong: #7c8798;
+
+    --cell-bg: #14181e;
+    --cell-given: #ffffff;
+    --cell-user: #7db3ff;
+    --cell-hint: #56d6a0;
+    --cell-note: #a6b0be;
+
+    --sel-bg: #23375c;
+    --peer-bg: #212832;
+    --same-bg: #2e4a7d;
+
+    --error-bg: #4a1c20;
+    --error-fg: #ffa8a2;
+
+    --accent: #7db3ff;
+    --accent-contrast: #0b0d10;
+    --accent-soft: #1f2b3d;
+
+    --focus: #7db3ff;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 10px 28px rgba(0, 0, 0, .45);
+  }
+}
+
+/* Tema scuro forzato dall'utente */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0b0d10;
+  --surface: #14181e;
+  --surface-2: #1b2028;
+  --text: #f2f5f9;
+  --muted: #a3acba;
+  --border: #2b323c;
+
+  --line: #333b47;
+  --line-strong: #7c8798;
+
+  --cell-bg: #14181e;
+  --cell-given: #ffffff;
+  --cell-user: #7db3ff;
+  --cell-hint: #56d6a0;
+  --cell-note: #a6b0be;
+
+  --sel-bg: #23375c;
+  --peer-bg: #212832;
+  --same-bg: #2e4a7d;
+
+  --error-bg: #4a1c20;
+  --error-fg: #ffa8a2;
+
+  --accent: #7db3ff;
+  --accent-contrast: #0b0d10;
+  --accent-soft: #1f2b3d;
+
+  --focus: #7db3ff;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 10px 28px rgba(0, 0, 0, .45);
+}
+
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+button, select, input { font: inherit; color: inherit; }
+
+:where(button, select, a, [tabindex]):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+h1, h2, h3, p, dl, dd, menu, ul { margin: 0; }
+menu, ul { padding: 0; list-style: none; }
+
+/* ------------------------------------------------------------------ */
+/* Struttura                                                           */
+/* ------------------------------------------------------------------ */
+.app {
+  min-height: 100svh;
+  max-width: 980px;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding:
+    calc(var(--gap) + env(safe-area-inset-top))
+    calc(var(--gap) + env(safe-area-inset-right))
+    calc(var(--gap) + env(safe-area-inset-bottom))
+    calc(var(--gap) + env(safe-area-inset-left));
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand__title {
+  font-size: clamp(1.35rem, 5vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: .22em;
+  line-height: 1.1;
+}
+
+.brand__tagline {
+  margin-top: 2px;
+  font-size: .82rem;
+  color: var(--muted);
+  letter-spacing: .02em;
+}
+
+.topbar__actions { display: flex; gap: 8px; flex: none; }
+
+.icon-btn {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.05rem;
+  line-height: 1;
+  transition: background .15s ease, border-color .15s ease;
+}
+.icon-btn:hover { background: var(--surface-2); }
+.icon-btn:focus-visible { border-radius: 50%; }
+
+.layout {
+  flex: 1;
+  display: grid;
+  gap: var(--gap);
+  align-content: start;
+  justify-items: center;
+  min-width: 0;
+}
+
+.board-area {
+  width: min(100%, var(--board-size));
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+/* I comandi usano tutta la larghezza utile: sui telefoni bassi la griglia
+   si riduce ma tastierino e pulsanti restano comodi. */
+.panel {
+  width: 100%;
+  max-width: 560px;
+  min-width: 0;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+/* ------------------------------------------------------------------ */
+/* Barra di stato                                                      */
+/* ------------------------------------------------------------------ */
+.status {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 6px;
+  box-shadow: var(--shadow);
+}
+
+.status__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+}
+
+.status__label {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--muted);
+}
+
+.status__value {
+  font-size: clamp(.9rem, 3.4vw, 1.05rem);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.status__value--alert { color: var(--error-fg); }
+
+/* ------------------------------------------------------------------ */
+/* Griglia                                                             */
+/* ------------------------------------------------------------------ */
+.board-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.board {
+  position: relative;
+  width: min(100%, var(--board-size));
+  aspect-ratio: 1 / 1;
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+  gap: 1px;
+  padding: 2px;
+  background: var(--line);
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  touch-action: manipulation;
+  container-type: inline-size;
+}
+
+/* Linee spesse dei blocchi 3×3, disegnate sopra la griglia */
+.board::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--line-strong), var(--line-strong)) 33.333% 0 / 2px 100% no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) 66.666% 0 / 2px 100% no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) 0 33.333% / 100% 2px no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) 0 66.666% / 100% 2px no-repeat;
+}
+
+.board__row { display: contents; }
+
+.cell {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--cell-bg);
+  color: var(--cell-user);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1rem, 6vw, 2rem);
+  font-size: 5.4cqw;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background-color .12s ease;
+  min-width: 0;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.cell.is-peer { background: var(--peer-bg); }
+.cell.is-same { background: var(--same-bg); }
+.cell.is-selected { background: var(--sel-bg); }
+
+.cell.is-given { color: var(--cell-given); font-weight: 700; }
+.cell.is-hint { color: var(--cell-hint); font-weight: 700; }
+
+.cell.is-error { background: var(--error-bg); color: var(--error-fg); font-weight: 700; }
+.cell.is-error.is-selected { background: var(--error-bg); box-shadow: inset 0 0 0 2px var(--error-fg); }
+
+.cell:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 3px var(--focus);
+  border-radius: 0;
+  z-index: 2;
+}
+
+.cell__value { pointer-events: none; }
+
+.cell__notes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  width: 100%;
+  height: 100%;
+  padding: 4%;
+  color: var(--cell-note);
+  font-weight: 500;
+  font-size: clamp(.42rem, 2.3vw, .72rem);
+  font-size: 2.4cqw;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.cell__notes[hidden] { display: none; }
+
+.cell__note { display: grid; place-items: center; }
+.cell__note:empty::after { content: "\00a0"; }
+
+/* Overlay di generazione */
+.busy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-size: .9rem;
+  z-index: 3;
+}
+.busy[hidden] { display: none; }
+
+.busy__spinner {
+  width: 26px;
+  height: 26px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Messaggi temporanei: sovrapposti alla griglia, non occupano spazio nel flusso */
+.live {
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  transform: translateX(-50%);
+  max-width: 96%;
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: .8rem;
+  line-height: 1.3;
+  text-align: center;
+  text-wrap: balance;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .18s ease;
+  z-index: 4;
+}
+.live:not(:empty) { opacity: .97; }
+
+/* ------------------------------------------------------------------ */
+/* Pannello comandi                                                    */
+/* ------------------------------------------------------------------ */
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 12rem;
+  min-width: 10.5rem;
+}
+
+.field__label {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--muted);
+}
+
+.select {
+  width: 100%;
+  min-width: 9.5rem;
+  padding: 11px 34px 11px 12px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% + 2px),
+    calc(100% - 12px) calc(50% + 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  text-overflow: ellipsis;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 10px 16px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background .15s ease, border-color .15s ease, opacity .15s ease;
+}
+.btn:hover { background: var(--surface-2); }
+.btn:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+  background: var(--surface-2);
+  border-style: dashed;
+}
+.btn:disabled:hover { background: var(--surface-2); }
+
+.btn--primary {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+  flex: 0 0 auto;
+}
+.btn--primary:hover { background: var(--accent); opacity: .9; }
+
+.btn--ghost { background: transparent; }
+
+.tools {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tool {
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 4px;
+  min-height: 58px;
+}
+
+.tool__icon { font-size: 1.05rem; line-height: 1; }
+.tool__text { font-size: .72rem; font-weight: 600; letter-spacing: .01em; }
+
+.tool[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.tool[aria-pressed="true"] .tool__text { font-weight: 700; }
+
+.pad {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.key {
+  position: relative;
+  min-height: 54px;
+  padding: 6px 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: clamp(1.15rem, 5vw, 1.5rem);
+  font-weight: 600;
+  color: var(--cell-user);
+  display: grid;
+  place-items: center;
+  transition: background .15s ease, opacity .15s ease;
+}
+.key:hover { background: var(--surface-2); }
+
+/* Cifra già presente nove volte: resta selezionabile ma passa in secondo piano */
+.key.is-done {
+  opacity: .4;
+  font-weight: 500;
+}
+
+.footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: .78rem;
+  padding-top: 4px;
+}
+.footer__line { line-height: 1.6; }
+.footer__line--muted { opacity: .9; }
+
+.linkish {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+/* ------------------------------------------------------------------ */
+/* Finestre di dialogo                                                 */
+/* ------------------------------------------------------------------ */
+.dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: min(86svh, 760px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.dialog::backdrop { background: rgba(0, 0, 0, .55); }
+.dialog--compact { width: min(400px, calc(100vw - 32px)); }
+
+.dialog__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: clamp(18px, 4vw, 26px);
+}
+.dialog__inner--center { align-items: center; text-align: center; }
+
+.dialog__title { font-size: 1.25rem; font-weight: 700; }
+.dialog__title:focus { outline: none; }
+.dialog__title:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+.dialog__subtitle {
+  margin-top: 8px;
+  font-size: .74rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--muted);
+}
+.dialog p { font-size: .92rem; }
+.dialog__list { display: flex; flex-direction: column; gap: 6px; font-size: .9rem; }
+.dialog__list li { padding-left: 14px; position: relative; }
+.dialog__list li::before { content: "·"; position: absolute; left: 4px; }
+.dialog__meta { color: var(--muted); font-size: .84rem !important; }
+
+.dialog__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.dialog__actions--center { justify-content: center; }
+
+.win__mark {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+.win__lead { color: var(--muted); }
+
+.win__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+}
+.win__stats > div {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 8px 4px;
+}
+.win__stats dt {
+  font-size: .64rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+}
+.win__stats dd {
+  font-size: .95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ */
+/* Adattamenti responsivi                                              */
+/*                                                                     */
+/* Il layout è scelto in base allo spazio realmente disponibile —       */
+/* larghezza, altezza e proporzioni — mai in base allo user agent.      */
+/*                                                                     */
+/*   C  colonna singola      telefoni e finestre strette                */
+/*   A  due colonne          pieghevoli aperti, tablet, desktop:        */
+/*                           griglia a sinistra, comandi in verticale   */
+/*   B  due colonne compatte  poca altezza (telefoni in orizzontale)    */
+/* ------------------------------------------------------------------ */
+
+/* --- C: schermi molto stretti (pieghevoli chiusi, telefoni compatti) - */
+@media (max-width: 359px) {
+  :root { --gap: 8px; }
+  .brand__title { letter-spacing: .16em; }
+  .tools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .key { min-height: 48px; }
+}
+
+/* --- C: tastierino su una sola riga quando la larghezza lo consente -- */
+@media (min-width: 430px) {
+  .pad { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+}
+
+/* --- C: telefoni con poca altezza — comandi compatti, gioco tutto in vista */
+@media (max-width: 599px) and (max-height: 800px) {
+  :root {
+    --board-size: max(190px, min(
+      calc(100vw - var(--gap) * 2),
+      calc(100svh - 396px),
+      560px
+    ));
+  }
+  .status { padding: 6px 4px; }
+  .brand__tagline { font-size: .76rem; }
+  .tools { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .tool { min-height: 48px; padding: 6px 1px; }
+  .tool__text { font-size: clamp(.5rem, 2.3vw, .62rem); }
+  /* Difficoltà e Nuova partita restano sulla stessa riga anche a 320px */
+  .field { flex: 1 1 8rem; min-width: 8rem; }
+  .field .select { min-width: 0; padding-right: 30px; }
+  .row .btn--primary { padding: 10px 12px; }
+}
+
+/* ------------------------------------------------------------------ */
+/* A — due colonne con pannello verticale                              */
+/*                                                                     */
+/* Attiva quando c'è larghezza sufficiente e altezza reale:            */
+/*  - da 760px di larghezza (tablet, desktop);                          */
+/*  - da 600px se la forma dello schermo è larga (pieghevoli aperti).   */
+/* La griglia non cresce oltre lo spazio verticale disponibile, così    */
+/* griglia, stato, tastierino e comandi restano visibili insieme.       */
+/* ------------------------------------------------------------------ */
+@media (min-height: 640px) and (min-width: 760px),
+       (min-height: 640px) and (min-width: 600px) and (min-aspect-ratio: 3 / 4) {
+  :root {
+    --board-size: max(240px, min(
+      calc(min(100vw, 1040px) - var(--panel-w) - var(--gap) * 3 - 8px),
+      calc(100svh - var(--gap) * 5 - 128px),
+      620px
+    ));
+  }
+
+  .app { max-width: 1040px; }
+
+  .brand__title { font-size: clamp(1.3rem, 2.4vw, 1.75rem); }
+
+  .layout {
+    grid-template-columns: minmax(0, var(--board-size)) var(--panel-w);
+    justify-content: center;
+    justify-items: stretch;
+    align-items: start;
+  }
+
+  .board-area,
+  .panel { width: auto; max-width: none; }
+
+  .panel { position: sticky; top: var(--gap); }
+
+  /* Il tastierino diventa 3×3: usa l'altezza della colonna, non la larghezza */
+  .pad {
+    order: 1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .key {
+    min-height: clamp(42px, 7.2svh, 64px);
+    font-size: clamp(1.15rem, 2.6svh, 1.6rem);
+  }
+
+  .tools {
+    order: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .tool { min-height: clamp(42px, 5.6svh, 56px); }
+  /* L'ultimo comando occupa la riga intera: griglia sempre regolare */
+  .tools .tool:last-child { grid-column: 1 / -1; }
+
+  /* Nuova partita resta un'azione secondaria, in fondo al pannello */
+  .panel .row {
+    order: 3;
+    margin-top: 2px;
+    padding-top: var(--gap);
+    border-top: 1px solid var(--border);
+  }
+  .panel .row .btn--primary { flex: 1 1 100%; }
+}
+
+/* ------------------------------------------------------------------ */
+/* B — due colonne compatte quando l'altezza è poca                    */
+/* (telefoni in orizzontale, finestre basse)                           */
+/* ------------------------------------------------------------------ */
+@media (max-height: 639px) and (min-width: 560px) {
+  :root {
+    --gap: 8px;
+    --board-size: max(200px, min(calc(100svh - 116px), 460px));
+  }
+  .app { max-width: none; }
+  .brand__tagline { display: none; }
+  .brand__title { font-size: 1.1rem; }
+  .icon-btn { width: 36px; height: 36px; }
+  .layout {
+    grid-template-columns: minmax(0, var(--board-size)) minmax(220px, 1fr);
+    justify-content: center;
+    justify-items: stretch;
+    align-items: start;
+  }
+  .board-area { width: auto; max-width: none; }
+  .panel { width: auto; max-width: none; margin-inline: 0; position: static; }
+  .status { padding: 5px 4px; }
+
+  /* Stesso ordine del layout a due colonne: prima il gioco, poi le opzioni */
+  .pad { order: 1; }
+  .tools { order: 2; }
+  .panel .row {
+    order: 3;
+    padding-top: var(--gap);
+    border-top: 1px solid var(--border);
+  }
+  .status__label { font-size: .6rem; }
+  .tools { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .tools .tool:last-child { grid-column: auto; }
+  .tool { min-height: 46px; }
+  .tool__text { font-size: .64rem; }
+  .pad { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+  .key { min-height: 44px; font-size: clamp(1.05rem, 4vh, 1.35rem); }
+  .footer { display: none; }
+}
+
+/* Due colonne su schermi alti: il gioco resta otticamente centrato
+   invece di lasciare tutto lo spazio libero in fondo. */
+@media (min-height: 880px) and (min-width: 760px),
+       (min-height: 880px) and (min-width: 600px) and (min-aspect-ratio: 3 / 4) {
+  .layout { align-content: center; }
+  .layout { align-content: safe center; }
+}
+
+/* Schermi molto alti: il contenuto resta otticamente centrato */
+@media (min-height: 1200px) {
+  .layout { align-content: center; }
+  .layout { align-content: safe center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root { --border: var(--line-strong); }
+}

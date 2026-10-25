@@ -1,0 +1,39 @@
+{
+  "name": "ILCUBO — cubo magico 3D personalizzabile",
+  "short_name": "ILCUBO",
+  "id": "/ILCUBO/",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "it",
+  "dir": "ltr",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "description": "Cubo magico 3D giocabile dal browser, con personalizzazione totale delle facce (colori, numeri, lettere, testi, emoji, immagini), modalità Memo e pattern famosi.",
+  "categories": [
+    "games",
+    "education",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "icons/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
