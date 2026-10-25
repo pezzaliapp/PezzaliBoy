@@ -160,6 +160,12 @@
       stage.insertBefore(el, stage.firstChild);
       mark(el, 'gbx-pre');
     });
+    if (cfg.css) {
+      var extra = document.createElement('style');
+      extra.textContent = cfg.css;
+      (document.head || document.documentElement).appendChild(extra);
+      st.extra = extra;
+    }
     document.documentElement.classList.add('gbx-on');
     focusState = st;
     try { window.dispatchEvent(new Event('resize')); } catch (e) {}
@@ -174,6 +180,7 @@
       try { m[1].insertBefore(m[0], m[2]); } catch (e) {}
     });
     st.stage.style.removeProperty('background');
+    if (st.extra) st.extra.remove();
     document.documentElement.classList.remove('gbx-on');
     focusState = null;
     try { window.dispatchEvent(new Event('resize')); } catch (e) {}

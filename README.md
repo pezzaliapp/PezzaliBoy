@@ -8,6 +8,8 @@ tastiera e gamepad, e mostra sullo schermo la sola area di gioco.
 
 ## Cartucce incluse
 
+I cinque giochi di Retro Arcade (repo `2600`) sono cartucce separate: la console avvia direttamente il gioco scelto e mostra solo il suo schermo, senza il cabinato.
+
 | Cartuccia | Repo | Comandi console |
 |---|---|---|
 | PAC-MAN | PAC-MAN-PWA | D-pad muovi · A/START gioca |
@@ -19,7 +21,7 @@ tastiera e gamepad, e mostra sullo schermo la sola area di gioco.
 | Q\*bert | QbertPWA | diagonali del D-pad · START gioca/pausa |
 | Snake | Snake | D-pad · A/START avvia · SELECT pausa · B reset |
 | ALESKAT | ALESKAT | D-pad nuota · A/B scatto · START tuffati · SELECT menu |
-| 2600 | 2600 | tocca un gioco · A fuoco · START conferma · SELECT menu |
+| Jungle Dash, River Rush, Invasione Aliena, Maze Muncher, Corsa Infinita | 2600 (Retro Arcade) | D-pad · A azione/fuoco · START rigioca · SELECT ricomincia |
 | Sudoku | SUDOKU | touch · D-pad sposta · B cancella |
 | Il Cubo | ILCUBO (cartella docs) | touch |
 | Cubo 3×3 WebGL | Tris | touch |

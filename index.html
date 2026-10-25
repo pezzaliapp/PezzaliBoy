@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>PezzaliBoy Arcade</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Console tascabile che raccoglie i giochi PezzaliAPP: cartucce arcade e puzzle giocabili con D-pad, A, B, START, SELECT, tastiera, gamepad o touch.">
+<meta name="description" content="Console tascabile che raccoglie i giochi PezzaliAPP: 20 cartucce arcade, retro e puzzle giocabili con D-pad, A, B, START, SELECT, tastiera, gamepad o touch.">
 <meta name="theme-color" content="#cfc9d9">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -298,10 +298,21 @@ const GAMES = [
     icon:'games/aleskat/icon-192.png', dpad:'8',
     map:{ A:K(' '), B:K('Shift'), START:{click:['#btnPlay','#btnRestart']}, SELECT:{click:['#btnMenu']} },
     help:'D-PAD nuota · A/B scatto · START tuffati · SELECT menu' },
-  { id:'atari2600', name:'2600', kind:'arcade', note:'Collezione di mini-giochi retro',
-    icon:'games/atari2600/icons/icon-192.png', dpad:'8',
-    map:{ A:K(' '), B:K(' '), START:{click:['#disclaimerBtn','#msgBtn']}, SELECT:{click:['#backBtn']} },
-    help:'Tocca un gioco · A fuoco · START conferma · SELECT menu 2600' },
+  ...[
+    ['pitfall',   'JUNGLE DASH',      'Salta buche, tronchi e coccodrilli', 'JD'],
+    ['riverraid', 'RIVER RUSH',       'Vola sul fiume, fai rifornimento',   'RR'],
+    ['invaders',  'INVASIONE ALIENA', 'Ondate aliene in stile 2600',        'IA'],
+    ['pacman',    'MAZE MUNCHER',     'Puntini e fantasmi nel labirinto',   'MM'],
+    ['enduro',    'CORSA INFINITA',   'Sorpassi giorno e notte',            'CI']
+  ].map(([gid, name, note, glyph]) => ({
+    id:'retro-' + gid, dir:'atari2600', name, note, glyph, icon:'', kind:'retro', dpad:'8',
+    gate:'#disclaimer',
+    boot:{ click:['.game-row[data-game="' + gid + '"]'] },
+    focus:{ stage:'#screen-inner', canvas:'#cv', hide:['#backBtn','#menu','#shell > header.brand','#controls','#install'],
+           css:'#shell::before,#shell::after{display:none!important} #screen-inner .scan,#screen-inner .vignette{position:absolute!important;inset:0!important}' },
+    map:{ A:K(' '), B:K(' '), START:{click:['#disclaimerBtn','#msgBtn']}, SELECT:{click:['.game-row[data-game="' + gid + '"]']} },
+    help:'D-PAD muovi · A azione/fuoco · START rigioca · SELECT ricomincia'
+  })),
   { id:'sudoku', name:'SUDOKU', kind:'touch', note:'Logica 9×9, anche su App Store',
     icon:'games/sudoku/icons/icon-192.png', dpad:'4',
     map:{ B:K('Backspace') },
@@ -331,7 +342,7 @@ const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k)
 
 /* ===== menu ===== */
 function buildMenu(){
-  const groups = [['arcade','ARCADE · D-PAD'], ['touch','PUZZLE · TOUCH']];
+  const groups = [['arcade','ARCADE · D-PAD'], ['retro','RETRO ARCADE · COLLEZIONE 2600'], ['touch','PUZZLE · TOUCH']];
   let html = '', idx = 0;
   const order = [];
   groups.forEach(([kind, label]) => {
@@ -339,7 +350,7 @@ function buildMenu(){
     GAMES.filter(g => g.kind === kind).forEach(g => {
       order.push(g);
       const img = g.icon ? `<img src="${g.icon}" alt="" loading="lazy">` : `<span class="noimg">${g.glyph || '?'}</span>`;
-      html += `<button class="cart" type="button" data-i="${idx}" id="cart-${g.id}">${img}<span><b>${g.name}</b><small>${g.note}</small></span><em>${kind === 'arcade' ? 'PAD' : 'TOUCH'}</em></button>`;
+      html += `<button class="cart" type="button" data-i="${idx}" id="cart-${g.id}">${img}<span><b>${g.name}</b><small>${g.note}</small></span><em>${kind === 'touch' ? 'TOUCH' : 'PAD'}</em></button>`;
       idx++;
     });
   });
@@ -373,7 +384,7 @@ function load(g){
   frame = document.createElement('iframe');
   frame.title = g.name;
   frame.setAttribute('allow', 'autoplay; fullscreen; gamepad; accelerometer; gyroscope');
-  frame.src = 'games/' + g.id + '/index.html';
+  frame.src = 'games/' + (g.dir || g.id) + '/index.html';
   frame.addEventListener('load', onFrameLoad);
   screen.insertBefore(frame, $('toast'));
   $('now').textContent = '▶ ' + g.name;
@@ -390,10 +401,26 @@ function onFrameLoad(){
     w.addEventListener('pointerdown', unlockAudio, true);
     w.addEventListener('touchend', unlockAudio, true);
   } catch (e) {}
-  applyView(true);
+  waitGate(g, () => {
+    applyView(true);
+    if (g.boot) setTimeout(() => { const b = bridge(); if (b && current === g) b.click(g.boot.click); }, 120);
+    toast(g.help);
+  });
   if (muted) setTimeout(() => { const b = bridge(); b && b.mute(true); }, 400);
-  toast(g.help);
   try { w.focus(); } catch (e) {}
+}
+/* Alcuni giochi mostrano un avviso al primo avvio: lo lasciamo leggere, START lo accetta, poi parte la cartuccia. */
+function waitGate(g, go){
+  if (!g.gate) return go();
+  let warned = false;
+  (function check(){
+    if (current !== g) return;
+    let el = null; try { el = gw().document.querySelector(g.gate); } catch (e) {}
+    const open = el && gw().getComputedStyle(el).display !== 'none';
+    if (!open) return go();
+    if (!warned) { warned = true; toast('Leggi l\u2019avviso, poi premi START per accettare'); }
+    setTimeout(check, 300);
+  })();
 }
 function unload(){
   releaseAll();
@@ -595,7 +622,7 @@ window.addEventListener('keyup', e => {
 /* quando il gioco ha il focus, i tasti vanno diretti al gioco: illuminiamo solo i pulsanti */
 const MIRROR = { ArrowUp:'u', ArrowDown:'d', ArrowLeft:'l', ArrowRight:'r' };
 function mirrorKey(e, down){
-  if (e.key === 'Escape' && down && current && current.kind === 'arcade') { setTimeout(backToMenu, 0); return; }
+  if (e.key === 'Escape' && down && current && current.kind !== 'touch') { setTimeout(backToMenu, 0); return; }
   const d = MIRROR[e.key];
   if (d) dpad.classList.toggle('p-' + d, down);
 }
@@ -635,7 +662,7 @@ setTimeout(() => { const b = $('boot'); b.classList.add('gone'); setTimeout(() =
 window.addEventListener('blur', () => { /* il focus è passato al gioco: rilasciamo solo i tasti della console */ });
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {}); });
 }
 </script>
 </body>
