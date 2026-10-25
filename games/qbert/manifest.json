@@ -1,6 +1,6 @@
 {
-  "name": "Q*bert — PWA (Arcade Complete)",
-  "short_name": "Q*bert PWA",
+  "name": "Piramide Salterina",
+  "short_name": "Piramide",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0b1424",

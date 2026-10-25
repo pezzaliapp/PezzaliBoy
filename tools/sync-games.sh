@@ -54,5 +54,6 @@ if tag not in s:
 EOF
 done
 
+python3 "$ROOT/tools/rebrand.py"
 python3 "$ROOT/tools/build-sw.py"
 echo "Fatto. Controlla in locale con:  python3 -m http.server  e apri http://localhost:8000"

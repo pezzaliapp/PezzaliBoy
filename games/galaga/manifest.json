@@ -1,7 +1,7 @@
 {
-  "name": "Galaga — PWA (Tributo didattico)",
-  "short_name": "GalagaPWA",
-  "description": "Ricreazione didattica ispirata a Galaga (1981, Namco). Funziona su smartphone e laptop. MIT — pezzaliAPP.",
+  "name": "Sciame Stellare",
+  "short_name": "Sciame",
+  "description": "Gioco originale pezzaliAPP, scritto da zero. Nessun legame con altri giochi o marchi. MIT — pezzaliAPP.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#000000",

@@ -4,7 +4,7 @@
 <script src="../../gbx-bridge.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>PAC-MAN</title>
+<title>GHIOTTONE</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#000010">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -75,7 +75,7 @@ canvas{display:block;image-rendering:pixelated}
 <div id="wrap">
   <canvas id="gc"></canvas>
   <div id="overlay">
-    <h1>PAC-MAN</h1>
+    <h1>GHIOTTONE</h1>
     <div id="ov-sub">PEZZALIAPP EDITION</div>
     <div id="lives-row"></div>
     <div id="ov-msg">Mangia tutti i pallini!&#10;Evita i fantasmi colorati!&#10;&#10;Pallino grande = mangi i fantasmi!</div>
@@ -654,7 +654,7 @@ function showOverlay(title,scoreText,btnHtml){
 function hideOverlay(){overlay.classList.add('hidden');}
 
 function showTitle(){
-  overlay.querySelector('h1').textContent='PAC-MAN';
+  overlay.querySelector('h1').textContent='GHIOTTONE';
   ovMsg.style.display='block';
   ovMsg.innerHTML='Mangia tutti i pallini!<br>Evita i fantasmi colorati!<br><br>Pallino grande = mangi i fantasmi!';
   ovScore.style.display='none';

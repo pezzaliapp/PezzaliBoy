@@ -8,17 +8,20 @@ tastiera e gamepad, e mostra sullo schermo la sola area di gioco.
 
 ## Cartucce incluse
 
+Tutti i giochi sono scritti da zero da pezzaliAPP. Le cartucce ispirate ai classici arcade hanno nomi originali
+(applicati da `tools/rebrand.py`): nessun nome, logo o marchio di altri giochi compare nella console.
+
 I cinque giochi di Retro Arcade (repo `2600`) sono cartucce separate: la console avvia direttamente il gioco scelto e mostra solo il suo schermo, senza il cabinato.
 
 | Cartuccia | Repo | Comandi console |
 |---|---|---|
-| PAC-MAN | PAC-MAN-PWA | D-pad muovi · A/START gioca |
-| Galaga | GalagaPWA | ◀ ▶ · A spara · START gioca · SELECT pausa |
-| Space Invaders | SpaceInvadersPWA | ◀ ▶ · A spara · START gioca · SELECT pausa |
-| Defender | DefenderPWA | D-pad · A fuoco · B missile · START restart · SELECT pausa |
-| Frogger | FroggerPWA | D-pad salta · START gioca · SELECT pausa |
-| Centipede | Centipede | ◀ ▶ · A spara · START ricomincia · SELECT pausa |
-| Q\*bert | QbertPWA | diagonali del D-pad · START gioca/pausa |
+| Ghiottone | PAC-MAN-PWA | D-pad muovi · A/START gioca |
+| Sciame Stellare | GalagaPWA | ◀ ▶ · A spara · START gioca · SELECT pausa |
+| Ondata Aliena | SpaceInvadersPWA | ◀ ▶ · A spara · START gioca · SELECT pausa |
+| Guardiano Orbitale | DefenderPWA | D-pad · A fuoco · B missile · START restart · SELECT pausa |
+| Saltarana | FroggerPWA | D-pad salta · START gioca · SELECT pausa |
+| Giardino Infestato | Centipede | ◀ ▶ · A spara · START ricomincia · SELECT pausa |
+| Piramide Salterina | QbertPWA | diagonali del D-pad · START gioca/pausa |
 | Snake | Snake | D-pad · A/START avvia · SELECT pausa · B reset |
 | ALESKAT | ALESKAT | D-pad nuota · A/B scatto · START tuffati · SELECT menu |
 | Jungle Dash, River Rush, Invasione Aliena, Maze Muncher, Corsa Infinita | 2600 (Retro Arcade) | D-pad · A azione/fuoco · START rigioca · SELECT ricomincia |
@@ -51,7 +54,7 @@ Quando modifichi uno dei giochi nel suo repo, riallinea le cartucce con:
 bash tools/sync-games.sh
 ```
 
-Lo script riscarica i repo, ricompila Triton Wars, reinserisce `gbx-bridge.js` e rigenera `sw.js`.
+Lo script riscarica i repo, ricompila Triton Wars, reinserisce `gbx-bridge.js`, riapplica i nomi originali (`tools/rebrand.py`) e rigenera `sw.js`.
 Per aggiungere una cartuccia: una riga in `tools/sync-games.sh` e una voce nell'array `GAMES` in `index.html`.
 
 ## Come funziona

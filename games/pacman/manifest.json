@@ -1,7 +1,7 @@
 {
-  "name": "PAC-MAN PWA",
-  "short_name": "PAC-MAN",
-  "description": "Pac-Man arcade game - PezzaliApp Edition",
+  "name": "Ghiottone",
+  "short_name": "Ghiottone",
+  "description": "Labirinto, puntini e fantasmi - pezzaliAPP",
   "start_url": "./index.html",
   "display": "fullscreen",
   "orientation": "portrait",

@@ -1,7 +1,7 @@
 {
-  "name": "Q*bert — PWA (Tributo 1982)",
-  "short_name": "QbertPWA",
-  "description": "Replica didattica ispirata a Q*bert (1982). PWA con comandi touch esterni, mobile-first.",
+  "name": "Piramide Salterina",
+  "short_name": "Piramide",
+  "description": "Gioco originale pezzaliAPP, scritto da zero. Nessun legame con altri giochi o marchi. PWA con comandi touch esterni, mobile-first.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#000000",
