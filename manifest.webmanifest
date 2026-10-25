@@ -1,16 +1,26 @@
 {
+  "id": "/PezzaliBoy/",
   "name": "PezzaliBoy Arcade",
   "short_name": "PezzaliBoy",
-  "description": "Console tascabile con tutti i giochi PezzaliAPP: arcade e puzzle con D-pad, A/B, START/SELECT o touch.",
-  "start_url": "./",
-  "scope": "./",
+  "description": "Console tascabile con 20 giochi PezzaliAPP: arcade, retro e puzzle con D-pad, A/B, START/SELECT o touch.",
+  "start_url": "/PezzaliBoy/",
+  "scope": "/PezzaliBoy/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#24212d",
   "theme_color": "#cfc9d9",
   "lang": "it",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }

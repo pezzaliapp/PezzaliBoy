@@ -1,5 +1,5 @@
 /* PezzaliBoy service worker (generato da tools/build-sw.py) */
-const CACHE = 'pezzaliboy-972cc33ca1';
+const CACHE = 'pezzaliboy-2239ae1ca6';
 const FILES = [
 "./gbx-bridge.js",
 "./index.html",
